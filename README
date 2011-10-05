@@ -1,0 +1,5 @@
+* PRTime : This type is a 64-bit integer representing the number of microseconds
+  since the NSPR epoch, midnight (00:00:00) 1 January 1970 Coordinated Universal
+  Time (UTC). A time after the epoch has a positive value, and a time before the
+  epoch has a negative value. 
+
