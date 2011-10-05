@@ -3,3 +3,4 @@
   Time (UTC). A time after the epoch has a positive value, and a time before the
   epoch has a negative value. 
 
+* A bookmark folder (in moz_bookmarks): type = 2 & parent != 4.

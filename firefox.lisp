@@ -1,7 +1,8 @@
 ;;; functions handling firefox bookmarks (requires cl-sql, cl-sql-sqlite3 & co.)
 
 ;;; :fixme: - add proper package management
-(asdf:oos 'asdf:load-op :clsql-sqlite3)
+(eval-when (:compile-toplevel)
+  (asdf:oos 'asdf:load-op :clsql-sqlite3))
 
 
 ;;; bookmark class - browser independent
@@ -43,7 +44,7 @@
 
 
 ;;; firefox functions
-(defun frx-open-file (&key (path "places.sqlite"))
+(defun frx-open-file (&optional (path "places.sqlite"))
   "Open an sqlite connection to the specified file."
   (clsql:connect (list path) :database-type :sqlite3 :if-exists :old)
   (frx-read-tags))
@@ -99,7 +100,7 @@ exist and cannot be added. if-not-exist may be :add or :skip (default)."
               nil)
           (cdr tag))))
 
-  )
+  ) ; end frx-tags closure
 
 
 (defun frx-get-bookm-by-url (url)
@@ -145,26 +146,60 @@ exist and cannot be added. if-not-exist may be :add or :skip (default)."
     title))
 
 
-(defun frx-add-bookm (bookm)
-  "Add a bookmark into the firefox sqlite file"
-  (clsql:insert-records :into "moz_places"
-                        :attributes '(url title frecency last_visit_date)
-                        :values (list (url bookm) (title bookm)
-                                      0 (frx-time :time (v-time bookm))))
-  (let* ((query "select last_insert_rowid() from moz_places")
-         (place-id (car (car (clsql:query query :field-names nil)))))
-    (clsql:insert-records :into "moz_bookmarks"
-                          :attributes '(type fk parent title
-                                        dateAdded lastModified)
-                          :values (list 1 place-id 5 (title bookm)
-                                        (frx-time :time (c-time bookm)) 
-                                        (frx-time :time (m-time bookm))))))
+(defun frx-get-folder-props (name)
+  "Return folder id & no. of elements in that folder (as multiple values) or nil
+if no such folder exists."
+  (let* ((query (format nil "select id from moz_bookmarks where type=2 and
+parent!=4 and title='~a'" name))
+        (folder-id (car (car (clsql:query query :field-names nil)))))
+    (if folder-id
+        (let* ((query (format nil "select max(position) from moz_bookmarks
+  where parent=~a" folder-id))
+               (size (car (car (clsql:query query :field-names nil)))))
+          (values-list (list folder-id size)))
+        (values-list (list nil nil)))))
+
+
+(defun frx-add-bookm-tags (bookm place-id)
+  "Add tags of the bookm object into the database"
+  (dolist (tag (tags bookm))
+    (let* ((tag-id (frx-get-tag-id tag :if-not-exist :add)))
+      (clsql:insert-records :into "moz_bookmarks"
+                            :attributes '(type fk parent position
+                                          dateAdded lastModified)
+                            :values (list 1 place-id tag-id 0
+                                          (frx-time :time (c-time bookm))
+                                          (frx-time :time (m-time bookm)))))))
+
+
+(defun frx-add-bookm (bookm &optional (folder-name "Unsorted Bookmarks"))
+  "Add a bookmark into the firefox sqlite file under folder with name
+folder-name. If folder-name does not exist the function throws an error."
+  (multiple-value-bind (parent-id parent-size)
+      (frx-get-folder-props folder-name)
+    (when (null parent-id)
+      (error (concatenate 'string "No such folder: " folder-name)))
+    (clsql:insert-records :into "moz_places"
+                          :attributes '(url title frecency last_visit_date)
+                          :values (list (url bookm) (title bookm)
+                                        0 (frx-time :time (v-time bookm))))
+    (let* ((query "select last_insert_rowid() from moz_places")
+           (place-id (car (car (clsql:query query :field-names nil)))))
+      (clsql:insert-records :into "moz_bookmarks"
+                            :attributes '(type fk parent position title
+                                          dateAdded lastModified)
+                            :values (list 1 place-id parent-id (1+ parent-size)
+                                          (title bookm)
+                                          (frx-time :time (c-time bookm)) 
+                                          (frx-time :time (m-time bookm))))
+      (frx-add-bookm-tags bookm place-id))))
 
 
 (defun frx-time (&key (time 0 time-p) (year 1900 year-p) (month 1 month-p)
                  (day 1 day-p) (hour 0 hour-p) (min 0 min-p) (sec 1 sec-p))
   "Convert date/time to firefox time. If no parameter is supplied, the current
-                        time is returned."
+time is returned. If 'time' is supplied, it is converted from unix time (since
+epoch) to firefox time. "
   (cond
     ((or year-p month-p day-p hour-p min-p sec-p)
      (* (- (encode-universal-time sec min hour day month year) 2208981600)
