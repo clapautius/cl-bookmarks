@@ -91,8 +91,8 @@ the new tag."
 
 
   (defun frx-get-tag-id (tag-name &key (if-not-exist :skip))
-    "Add tag if it does not exist. Return the tag id or nil if the tag does not
-exist and cannot be added. if-not-exist may be :add or :skip (default)."
+    "Add tag if it does not exist and if-not-exist is :add. Return the tag id or
+nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
     (let ((tag (assoc tag-name frx-tags :test #'equal)))
       (if (null tag)
           (if (eql if-not-exist :add)
