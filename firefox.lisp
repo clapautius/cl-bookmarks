@@ -198,8 +198,8 @@ folder-name. If folder-name does not exist the function throws an error."
 (defun frx-time (&key (time 0 time-p) (year 1900 year-p) (month 1 month-p)
                  (day 1 day-p) (hour 0 hour-p) (min 0 min-p) (sec 1 sec-p))
   "Convert date/time to firefox time. If no parameter is supplied, the current
-time is returned. If 'time' is supplied, it is converted from unix time (since
-epoch) to firefox time. "
+time is returned. If 'time' is supplied, it is converted from lisp time
+(universal time) to firefox time. "
   (cond
     ((or year-p month-p day-p hour-p min-p sec-p)
      (* (- (encode-universal-time sec min hour day month year) 2208981600)
