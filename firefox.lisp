@@ -1,12 +1,5 @@
-;;; functions handling firefox bookmarks (requires cl-sql, cl-sql-sqlite3 & co.)
+;;; functions handling firefox bookmarks from the sqlite database
 
-;;; :fixme: - add proper package management
-(eval-when (:compile-toplevel)
-  (asdf:oos 'asdf:load-op :clsql-sqlite3))
-
-
-
-;;; firefox functions
 (defun frx-open-file (&optional (path "places.sqlite"))
   "Open an sqlite connection to the specified file."
   (clsql:connect (list path) :database-type :sqlite3 :if-exists :old)
