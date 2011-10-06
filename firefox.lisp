@@ -5,43 +5,6 @@
   (asdf:oos 'asdf:load-op :clsql-sqlite3))
 
 
-;;; bookmark class - browser independent
-;;; to be moved in a separate file :todo:
-(defclass bookmark ()
-  ((url :accessor url
-        :initarg :url
-        :initform (error "Must specify an URL"))
-
-   (title :accessor title
-          :initarg :title
-          :initform (error "Must specify a title"))
-
-   ;; creation time - in lisp format
-   (c-time :accessor c-time
-           :initarg :c-time
-           :initform (get-universal-time))
-
-   ;; modification time - in lisp format
-   (m-time :accessor  m-time
-           :initarg :m-time
-           :initform (get-universal-time))
-
-   ;; last visit time - in lisp format
-   (v-time :accessor v-time
-           :initarg :v-time
-           :initform (get-universal-time))
-
-   ;; list of tags
-   (tags :accessor tags
-         :initarg :tags
-         :initform nil))
-  (:documentation "Class containing basic elements for a bookmark"))
-
-
-(defmethod print-object ((bookmark bookmark) stream)
-  (format stream "<bookm: title=~a, url=~a, tags: ~a>"
-          (title bookmark) (url bookmark) (tags bookmark)))
-
 
 ;;; firefox functions
 (defun frx-open-file (&optional (path "places.sqlite"))
@@ -95,9 +58,8 @@ the new tag."
 nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
     (let ((tag (assoc tag-name frx-tags :test #'equal)))
       (if (null tag)
-          (if (eql if-not-exist :add)
-              (frx-add-tag tag-name)
-              nil)
+          (when (eql if-not-exist :add)
+              (frx-add-tag tag-name))
           (cdr tag))))
 
   ) ; end frx-tags closure
@@ -208,3 +170,10 @@ time is returned. If 'time' is supplied, it is converted from lisp time
      (* (- time 2208981600) 1000000))
     (t
      (* (- (get-universal-time) 2208981600) 1000000))))
+
+
+;;; * emacs display settings *
+;;; Local Variables:
+;;; default-tab-width: 4
+;;; indent-tabs-mode: nil
+;;; End:
