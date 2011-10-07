@@ -6,7 +6,7 @@
 
    (title :accessor title
           :initarg :title
-          :initform (error "Must specify a title"))
+          :initform nil)
 
    ;; creation time - in lisp format
    (c-time :accessor c-time

@@ -6,12 +6,16 @@
 (in-package :cl-bookmarks-system)
 
 (require 'clsql-sqlite3)
+(require 'closure-html)
 
 (asdf:defsystem :cl-bookmarks
     :components ((:file "package")                        
                  (:file "cl-bookmarks"
                         :depends-on ("package"))
                  (:file "firefox"
+                        :depends-on ("package"
+                                     "cl-bookmarks"))
+                 (:file "delicious"
                         :depends-on ("package"
                                      "cl-bookmarks"))))
 
