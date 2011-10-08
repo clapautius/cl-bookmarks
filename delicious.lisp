@@ -10,10 +10,11 @@
 
 
 (defun split-string (string char)
-  (loop for i = 0 then (1+ j)
-     as j = (position char string :start i)
-     collect (subseq string i j)
-     while j))
+  (remove-if (lambda (a) (zerop (length a)))
+             (loop for i = 0 then (1+ j)
+                as j = (position char string :start i)
+                collect (subseq string i j)
+                while j)))
 
 
 (let (dlc-bookmarks)
@@ -32,7 +33,8 @@
         (setf (bookm h)
               (make-instance
                'bookmark :url (hax:attribute-value href)
-               :tags (split-string (hax:attribute-value tags) #\,)))
+               :tags (mapcar (lambda (a) (string-trim '(#\Space) a))
+                             (split-string (hax:attribute-value tags) #\,))))
         ;;(format t ":debug: created new bookmark: ~a~%" (bookm h))
         )))
 
