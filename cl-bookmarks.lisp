@@ -1,3 +1,10 @@
+;;; browser independent classes and functions
+
+;;; debug flag
+(eval-when (:compile-toplevel)
+  (defparameter *cl-bookmarks-debug* nil))
+
+
 ;;; bookmark class - browser independent
 (defclass bookmark ()
   ((url :accessor url

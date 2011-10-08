@@ -144,6 +144,8 @@ folder-name. If folder-name does not exist the function throws an error."
     (when (null parent-id)
       (error (concatenate 'string "No such folder: " folder-name)))
     (when (frx-url-exist-p (url bookm))
+      (when *cl-bookmarks-debug*
+        (format t ":debug: url '~a' already exists in the db~%" (url bookm)))
       (return-from frx-add-bookm nil))
     (clsql:insert-records :into "moz_places"
                           :attributes '(url title frecency last_visit_date)
@@ -181,8 +183,9 @@ time is returned. If 'time' is supplied, it is converted from lisp time
                                   parent-folder (report t))
   "Add a list of bookmark objects to the sqlite file specified by path"
   (flet ((print-report (total tags-alist)
-           (format t "Total bookmarks added: ~a~%" total)
+           (format t "~%Total bookmarks added: ~a~%" total)
            (format t "Tags:~%")
+           (setf tags-alist (sort tags-alist #'string-lessp :key #'car))
            (dolist (tag-elt tags-alist)
              (when (plusp (cdr tag-elt))
                (if (string-equal (car tag-elt) "")
@@ -195,18 +198,26 @@ time is returned. If 'time' is supplied, it is converted from lisp time
       (dolist (bookm bookm-list)
         (if (frx-add-bookm bookm (if parent-folder parent-folder
                                      "Unsorted Bookmarks"))
-            ;; bookmark added succesfully - update report data
-            (when report
+            (progn
+              ;; bookmark added succesfully - update report data
               (incf report-total)
-              (let ((tag-list (tags bookm)))
-                (dolist (tag tag-list)
-                  (let ((found (assoc tag report-tags :test #'string-equal)))
-                    (if found
-                        (rplacd found (1+ (cdr found)))
-                        (setf report-tags (acons tag 1 report-tags)))))))
+              (when report
+                (let ((tag-list (tags bookm)))
+                  (dolist (tag tag-list)
+                    (let ((found (assoc tag report-tags :test #'string-equal)))
+                      (if found
+                          (rplacd found (1+ (cdr found)))
+                          (setf report-tags (acons tag 1 report-tags))))))))
             ;; some error occured
             (format t "~%ERROR: Bookmark with URL '~a' could not be added!~%"
-                    (url bookm))))
+                    (url bookm)))
+        ;; progress info
+        (when report
+          (when (zerop (mod report-total 25))
+            (format t "."))
+          (when (zerop (mod report-total 500))
+            (terpri))))
+
       (when report
         (print-report report-total report-tags)))
     (frx-close-file)))
