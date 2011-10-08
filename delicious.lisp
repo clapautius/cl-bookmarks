@@ -20,23 +20,30 @@
 (let (dlc-bookmarks)
 
   (defmethod hax:start-element ((h dlc-handler) name attributes)
-    (when (string-equal name "a")
-      ;;(format t ":debug: got A element~%")
-      (let* ((href (find-if
-                    (lambda (a) (string-equal "href" (hax:attribute-name a)))
-                    attributes))
-             (tags (find-if
-                    (lambda (a) (string-equal "tags" (hax:attribute-name a)))
-                    attributes)))
-        ;;(format t ":debug: href=~a, tags=~a~%"
-        ;;(hax:attribute-value href) (hax:attribute-value tag))
-        (setf (bookm h)
-              (make-instance
-               'bookmark :url (hax:attribute-value href)
-               :tags (mapcar (lambda (a) (string-trim '(#\Space) a))
-                             (split-string (hax:attribute-value tags) #\,))))
-        ;;(format t ":debug: created new bookmark: ~a~%" (bookm h))
-        )))
+    (flet ((get-tag (tag-name)
+             (find-if
+              (lambda (a) (string-equal tag-name (hax:attribute-name a)))
+              attributes))
+           (get-tag-value (tag-elt)
+             (when tag-elt
+               (hax:attribute-value tag-elt))))
+      (when (string-equal name "a")
+        (setf (inside-a h) t)
+        ;;(format t ":debug: got A element~%")
+        (let* ((href (get-tag "href"))
+               (tags (get-tag "tags"))
+               (c-time (get-tag "add_date")))
+          ;;(format t ":debug: href=~a, tags=~a~%"
+          ;;(hax:attribute-value href) (hax:attribute-value tag))
+          (setf (bookm h)
+                (make-instance
+                 'bookmark :url (get-tag-value href)
+                 :c-time (unix-to-lisp-time
+                          (parse-integer (get-tag-value c-time)))
+                 :tags (mapcar (lambda (a) (string-trim '(#\Space) a))
+                               (split-string (get-tag-value tags) #\,))))
+          ;;(format t ":debug: created new bookmark: ~a~%" (bookm h))
+          ))))
 
 
   (defmethod hax:characters ((h dlc-handler) data)
@@ -64,3 +71,10 @@
     (dlc-reset-bookm-list)
     (chtml:parse (pathname path) (make-instance 'dlc-handler))
     dlc-bookmarks))
+
+
+;;; * emacs display settings *
+;;; Local Variables:
+;;; default-tab-width: 4
+;;; indent-tabs-mode: nil
+;;; End:

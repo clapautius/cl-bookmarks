@@ -17,7 +17,12 @@
                                      "cl-bookmarks"))
                  (:file "delicious"
                         :depends-on ("package"
-                                     "cl-bookmarks"))))
+                                     "cl-bookmarks"))
+                 (:file "conversions"
+                        :depends-on ("package"
+                                     "cl-bookmarks"
+                                     "firefox"
+                                     "delicious"))))
 
 
 ;;; * emacs display settings *

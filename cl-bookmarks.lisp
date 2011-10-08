@@ -31,10 +31,16 @@
 
 
 (defmethod print-object ((bookmark bookmark) stream)
-  (format stream "<bookm: title=~a, url=~a, tags: ~a>"
-          (title bookmark) (url bookmark) (tags bookmark)))
+  "Print the bookmark object to the specified stream"
+  (format stream "<bookm: title=~a, url=~a, c-time=~a tags: ~a>"
+          (title bookmark) (url bookmark) (c-time bookmark) (tags bookmark)))
 
 
+(defun unix-to-lisp-time (unix-time)
+  "Convert an integer value representing a unix time to lisp time"
+  (+ unix-time (encode-universal-time 0 0 0 1 1 1970)))
+
+  
 ;;; * emacs display settings *
 ;;; Local Variables:
 ;;; default-tab-width: 4

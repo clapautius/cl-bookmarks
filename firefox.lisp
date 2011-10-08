@@ -101,6 +101,15 @@ nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
     title))
 
 
+(defun frx-url-exist-p (url)
+  "Return true if the specified url exists in the moz_places table (even if it
+  is not a bookmark!)"
+  (let* ((query (format nil "select count(*) from moz_places where url='~a'"
+                        url))
+         (no (car (car (clsql:query query :field-names nil)))))
+    (plusp no)))
+
+
 (defun frx-get-folder-props (name)
   "Return folder id & no. of elements in that folder (as multiple values) or nil
 if no such folder exists."
@@ -134,6 +143,8 @@ folder-name. If folder-name does not exist the function throws an error."
       (frx-get-folder-props folder-name)
     (when (null parent-id)
       (error (concatenate 'string "No such folder: " folder-name)))
+    (when (frx-url-exist-p (url bookm))
+      (return-from frx-add-bookm nil))
     (clsql:insert-records :into "moz_places"
                           :attributes '(url title frecency last_visit_date)
                           :values (list (url bookm) (title bookm)
@@ -147,7 +158,8 @@ folder-name. If folder-name does not exist the function throws an error."
                                           (title bookm)
                                           (frx-time :time (c-time bookm)) 
                                           (frx-time :time (m-time bookm))))
-      (frx-add-bookm-tags bookm place-id))))
+      (frx-add-bookm-tags bookm place-id))
+    t))
 
 
 (defun frx-time (&key (time 0 time-p) (year 1900 year-p) (month 1 month-p)
@@ -163,6 +175,41 @@ time is returned. If 'time' is supplied, it is converted from lisp time
      (* (- time 2208981600) 1000000))
     (t
      (* (- (get-universal-time) 2208981600) 1000000))))
+
+
+(defun frx-add-bookmarks-to-file (path bookm-list &key
+                                  parent-folder (report t))
+  "Add a list of bookmark objects to the sqlite file specified by path"
+  (flet ((print-report (total tags-alist)
+           (format t "Total bookmarks added: ~a~%" total)
+           (format t "Tags:~%")
+           (dolist (tag-elt tags-alist)
+             (when (plusp (cdr tag-elt))
+               (if (string-equal (car tag-elt) "")
+                   (format t "  without tag - ")
+                   (format t "  ~a - " (car tag-elt)))
+               (format t "~a bookmarks.~%" (cdr tag-elt))))))
+
+    (frx-open-file path)
+    (let ((report-total 0) (report-tags '(("" . 0))))
+      (dolist (bookm bookm-list)
+        (if (frx-add-bookm bookm (if parent-folder parent-folder
+                                     "Unsorted Bookmarks"))
+            ;; bookmark added succesfully - update report data
+            (when report
+              (incf report-total)
+              (let ((tag-list (tags bookm)))
+                (dolist (tag tag-list)
+                  (let ((found (assoc tag report-tags :test #'string-equal)))
+                    (if found
+                        (rplacd found (1+ (cdr found)))
+                        (setf report-tags (acons tag 1 report-tags)))))))
+            ;; some error occured
+            (format t "~%ERROR: Bookmark with URL '~a' could not be added!~%"
+                    (url bookm))))
+      (when report
+        (print-report report-total report-tags)))
+    (frx-close-file)))
 
 
 ;;; * emacs display settings *

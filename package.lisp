@@ -4,7 +4,9 @@
            :frx-open-file 
            :frx-close-file
            :frx-add-bookm 
-           :frx-get-bookm-by-url))
+           :frx-get-bookm-by-url
+           :dlc-parse-file
+           :delicious-to-firefox))
 
 
 ;;; * emacs display settings *
