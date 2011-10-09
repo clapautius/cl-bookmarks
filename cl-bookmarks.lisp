@@ -1,7 +1,7 @@
 ;;; browser independent classes and functions
 
 ;;; debug flag
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *cl-bookmarks-debug* nil))
 
 
