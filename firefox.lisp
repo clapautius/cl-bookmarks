@@ -75,7 +75,7 @@ from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id))
     ;; :fixme: - add time values
     (setf bookmark (make-instance 'bookmark :title (first (car results))
                                   :url (second (car results))
-                                  :v-time (nth 4 results)))
+                                  :v-time (from-frx-time (nth 4 results))))
     ;; get tags
     (let* ((query (format nil "select b.title from
 moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
@@ -235,6 +235,11 @@ time is returned. If 'time' is supplied, it is converted from lisp time
      (* (- time 2208981600) 1000000))
     (t
      (* (- (get-universal-time) 2208981600) 1000000))))
+
+
+(defun from-frx-time (frx-time)
+  "Convert from firefox time to universal (lisp) time"
+  (unix-to-lisp-time (/ frx-time 1000000)))
 
 
 (defun frx-add-bookmarks-to-file (path bookm-list &key

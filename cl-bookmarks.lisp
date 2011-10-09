@@ -42,7 +42,8 @@
   "Print the bookmark object to the specified stream"
   (format stream "<bookm: ~a, url=~a, ct=~a, vt=~a,~%  tags: ~a>"
           (shorten (title bookmark)) (shorten (url bookmark) 35)
-          (c-time bookmark) (v-time bookmark) (tags bookmark)))
+          (date-str (c-time bookmark)) (date-str (v-time bookmark))
+          (tags bookmark)))
 
 
 (defgeneric bookm-add-tag (bookmark tag))
@@ -61,6 +62,12 @@
 (defun unix-to-lisp-time (unix-time)
   "Convert an integer value representing a unix time to lisp time"
   (+ unix-time (encode-universal-time 0 0 0 1 1 1970)))
+
+
+(defun date-str (lisp-time)
+  (multiple-value-bind (sec min hour day month year)
+      (decode-universal-time lisp-time)
+    (format nil "~2,'0d-~2,'0d-~2,'0d" year month day)))
 
 
 (defun shorten (str &optional (len 17))

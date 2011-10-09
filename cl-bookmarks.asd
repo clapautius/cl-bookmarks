@@ -22,7 +22,11 @@
                         :depends-on ("package"
                                      "cl-bookmarks"
                                      "firefox"
-                                     "delicious"))))
+                                     "delicious"))
+                 (:file "firefox-utils"
+                        :depends-on ("package"
+                                     "cl-bookmarks"
+                                     "firefox"))))
 
 
 ;;; * emacs display settings *
