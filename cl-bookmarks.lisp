@@ -2,7 +2,8 @@
 
 ;;; debug flag
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *cl-bookmarks-debug* nil))
+  (defparameter *cl-bookmarks-debug* nil)
+  (defparameter *cl-bookmarks-trace-sql* nil))
 
 
 ;;; bookmark class - browser independent
@@ -39,15 +40,36 @@
 
 (defmethod print-object ((bookmark bookmark) stream)
   "Print the bookmark object to the specified stream"
-  (format stream "<bookm: title=~a, url=~a, c-time=~a tags: ~a>"
-          (title bookmark) (url bookmark) (c-time bookmark) (tags bookmark)))
+  (format stream "<bookm: ~a, url=~a, ct=~a, vt=~a,~%  tags: ~a>"
+          (shorten (title bookmark)) (shorten (url bookmark) 35)
+          (c-time bookmark) (v-time bookmark) (tags bookmark)))
+
+
+(defgeneric bookm-add-tag (bookmark tag))
+
+(defmethod bookm-add-tag ((bookmark bookmark) tag)
+  (if (null (tags bookmark))
+      (setf (tags bookmark) (list tag))
+      (nconc (tags bookmark) (list tag))))
+
+(defgeneric bookm-has-tag-p (bookmark tag))
+
+(defmethod bookm-has-tag-p ((bookmark bookmark) tag)
+  (position tag (tags bookmark) :test #'string-equal))
 
 
 (defun unix-to-lisp-time (unix-time)
   "Convert an integer value representing a unix time to lisp time"
   (+ unix-time (encode-universal-time 0 0 0 1 1 1970)))
 
-  
+
+(defun shorten (str &optional (len 17))
+  "Shorten a string to the first len elements"
+  (cond
+    ((> (length str) len) (concatenate 'string (subseq str 0 len) "..."))
+    (t str)))
+
+
 ;;; * emacs display settings *
 ;;; Local Variables:
 ;;; default-tab-width: 4

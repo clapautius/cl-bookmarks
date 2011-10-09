@@ -58,9 +58,41 @@ nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
   ) ; end frx-tags closure
 
 
+(defun frx-get-bookm-by-id (id)
+  "Return a bookmark object from the firefox database."
+  (when (null id)
+    (return-from frx-get-bookm-by-id nil))
+  (when *cl-bookmarks-debug*
+      (format t ":debug: searching for bookm with id=~a~%" id))
+  (let* ((query (format nil "select p.title, url, fk, last_visit_date 
+from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id))
+         (results (clsql:query query :field-names nil))
+         bookmark)
+    (when *cl-bookmarks-trace-sql*
+      (format t ":debug: ~a~%" query))
+    (when *cl-bookmarks-debug*
+      (format t ":debug: found bookm with id ~a: ~a~%" id results))
+    ;; :fixme: - add time values
+    (setf bookmark (make-instance 'bookmark :title (first (car results))
+                                  :url (second (car results))
+                                  :v-time (nth 4 results)))
+    ;; get tags
+    (let* ((query (format nil "select b.title from
+moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
+                          (third (car results))))
+           (results (clsql:query query :field-names nil)))
+      (when *cl-bookmarks-trace-sql*
+        (format t ":debug: ~a~%" query))
+      (when *cl-bookmarks-debug*
+        (format t ":debug: tags if bookm id ~a: ~a~%" id results))
+      (dolist (result results)
+        (bookm-add-tag bookmark (car result))))
+    bookmark))
+
+
 (defun frx-get-bookm-by-url (url)
   "Return a bookmark object from the firefox database."
-  (let* ((query (concatenate 'string "select b.id, b.title, url, b.parent "
+  (let* ((query (concatenate 'string "select b.id, p.title, url, b.parent "
                              "from moz_bookmarks b, moz_places p where "
                              "fk=p.id and url='" url "'"))
          (results (clsql:query query :field-names nil))
@@ -82,6 +114,32 @@ nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
     (when (and bookmark tags)
       (setf (tags bookmark) tags))
     bookmark))
+
+
+(defun frx-get-bookm-with-parent (parent-id)
+  "Return a list of ids of the bookmarks that have the parent parent-id"
+  (let* ((query (format nil "select id from moz_bookmarks where parent=~a"
+                        parent-id))
+         (results (clsql:query query :field-names nil)))
+    (when *cl-bookmarks-debug*
+      (format t ":debug: children of ~a: ~a~%" parent-id results))
+    (mapcar (lambda (a) (frx-get-bookm-by-id (car a))) results)))
+
+
+(defun frx-get-bookm-by-tags (tags)
+  "Return a list of bookmarks that have at least one of the tags in the tags
+list."
+  (when (null tags)
+    (return-from frx-get-bookm-by-tags nil))
+  (let* ((query (concatenate 'string "select id from moz_bookmarks where "
+                             " parent=4 and "
+                             (format nil "( ~{title = '~a' ~^ or ~} )" tags)))
+         (results (clsql:query query :field-names nil))
+         big-list)
+    (loop for tag-id in results do
+         (setf big-list (append big-list
+                                  (frx-get-bookm-with-parent (car tag-id)))))
+    big-list))
 
 
 (defun frx-get-type-of-elt (id)
