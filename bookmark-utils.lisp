@@ -44,12 +44,13 @@
         (setf min-priority priority)
         (setf min-priority-link link)))
     (cl-bookmarks:frx-close-file)
-    (cl-bookmarks:url min-priority-link)))
+    min-priority-link))
 
 
 (when (> (length (command-line-args)) 1)
   ;;(format t ":debug: cmd. line: ~a~%" (command-line-args))
-  (format t "~a~%" (frx-get-news-link (second (command-line-args)))))
+  (format t "~a~%" (cl-bookmarks:url (frx-get-news-link 
+                                      (second (command-line-args))))))
 
 
 ;;; * emacs display settings *

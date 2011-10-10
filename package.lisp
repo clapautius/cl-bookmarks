@@ -2,6 +2,8 @@
   (:use :common-lisp :clsql-sqlite3)
   (:export :bookmark
            :bookm-has-tag-p
+           :*cl-bookmarks-debug*
+           :*cl-bookmarks-trace-sql*
            :v-time
            :url
            :frx-open-file 
