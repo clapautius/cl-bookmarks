@@ -1,4 +1,6 @@
 ;;; various helper functions for conversions
+(in-package :cl-bookmarks-conv)
+
 
 (defun delicious-to-firefox (delicious-file firefox-db-path
                              &optional firefox-folder (report t))

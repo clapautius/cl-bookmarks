@@ -1,4 +1,6 @@
 ;;; browser independent classes and functions
+(in-package :cl-bookmarks)
+
 
 ;;; debug flag
 (eval-when (:compile-toplevel :load-toplevel :execute)

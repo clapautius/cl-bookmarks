@@ -1,4 +1,6 @@
 ;;; functions handling firefox bookmarks from the sqlite database
+(in-package :cl-bookmarks)
+
 
 (defun frx-open-file (&optional (path "places.sqlite"))
   "Open an sqlite connection to the specified file."
@@ -238,8 +240,11 @@ time is returned. If 'time' is supplied, it is converted from lisp time
 
 
 (defun from-frx-time (frx-time)
-  "Convert from firefox time to universal (lisp) time"
-  (unix-to-lisp-time (/ frx-time 1000000)))
+  "Convert from firefox time to universal (lisp) time. If frx-time is nil,
+return 0."
+  (if (null frx-time)
+      0
+      (unix-to-lisp-time (/ frx-time 1000000))))
 
 
 (defun frx-add-bookmarks-to-file (path bookm-list &key

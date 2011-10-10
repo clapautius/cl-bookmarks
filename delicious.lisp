@@ -1,4 +1,6 @@
 ;;; functions for delicious import
+(in-package :cl-bookmarks-conv)
+
 
 (defclass dlc-handler (hax:default-handler)
   ((inside-anchor :accessor inside-a

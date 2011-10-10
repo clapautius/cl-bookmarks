@@ -6,27 +6,14 @@
 (in-package :cl-bookmarks-system)
 
 (require 'clsql-sqlite3)
-(require 'closure-html)
 
 (asdf:defsystem :cl-bookmarks
-    :components ((:file "package")                        
+    :components ((:file "package")
                  (:file "cl-bookmarks"
                         :depends-on ("package"))
                  (:file "firefox"
                         :depends-on ("package"
-                                     "cl-bookmarks"))
-                 (:file "delicious"
-                        :depends-on ("package"
-                                     "cl-bookmarks"))
-                 (:file "conversions"
-                        :depends-on ("package"
-                                     "cl-bookmarks"
-                                     "firefox"
-                                     "delicious"))
-                 (:file "firefox-utils"
-                        :depends-on ("package"
-                                     "cl-bookmarks"
-                                     "firefox"))))
+                                     "cl-bookmarks"))))
 
 
 ;;; * emacs display settings *
