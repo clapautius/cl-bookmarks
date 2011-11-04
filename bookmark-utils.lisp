@@ -1,17 +1,14 @@
-#!/usr/bin/sbcl --script
+;;; helper script to get a news link from firefox db
+;;; usage (with sbcl): sbcl --noinform --load bookmark-utils.lisp --eval "(print-news-link \"$(find ~/.mozilla/firefox/ -name Cache -prune -o -name places.sqlite -print)\")"
+;;; ASDF should be loaded by the lisp compiler (via system init, user init or
+;;; some other method).
 
-(defun command-line-args ()
-  (or 
-   #+SBCL *posix-argv*  
-   #+LISPWORKS system:*line-arguments-list*
-   #+CMU extensions:*command-line-words*
-   nil))
-
-
-(when (> (length (command-line-args)) 1)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (with-open-file (*standard-output* "/dev/null" :direction :output
                                      :if-exists :supersede)
-    (require 'cl-bookmarks)))
+    (with-open-file (*error-output* "/dev/null" :direction :output
+                                    :if-exists :supersede)
+      (asdf:operate 'asdf:load-op :cl-bookmarks))))
 
 
 (defun frx-get-news-link (&optional (path "places.sqlite"))
@@ -47,10 +44,11 @@
     min-priority-link))
 
 
-(when (> (length (command-line-args)) 1)
-  ;;(format t ":debug: cmd. line: ~a~%" (command-line-args))
-  (format t "~a~%" (cl-bookmarks:url (frx-get-news-link 
-                                      (second (command-line-args))))))
+(defun print-news-link (path)
+  "Print a link and exit (to be used from scripts)."
+  ;; :fixme: quit is sbcl-specific?
+  (format t "~a~%" (cl-bookmarks:url (frx-get-news-link  path)))
+  (quit))
 
 
 ;;; * emacs display settings *
