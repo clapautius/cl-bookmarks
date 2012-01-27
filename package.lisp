@@ -1,5 +1,5 @@
 (defpackage :cl-bookmarks
-  (:use :common-lisp :clsql-sqlite3)
+  (:use :common-lisp :clsql-sqlite3 :json-system)
   (:export :bookmark
            :bookm-has-tag-p
            :*cl-bookmarks-debug*
@@ -12,6 +12,7 @@
            :frx-get-bookm-by-url
            :frx-get-bookm-by-tags
            :dlc-parse-file
+           :frx-json-parse-file
            :delicious-to-firefox))
 
 
