@@ -51,9 +51,11 @@
 (defgeneric bookm-add-tag (bookmark tag))
 
 (defmethod bookm-add-tag ((bookmark bookmark) tag)
-  (if (null (tags bookmark))
-      (setf (tags bookmark) (list tag))
-      (nconc (tags bookmark) (list tag))))
+  "A null tag is ignored."
+  (when tag
+    (if (null (tags bookmark))
+        (setf (tags bookmark) (list tag))
+        (nconc (tags bookmark) (list tag)))))
 
 (defgeneric bookm-has-tag-p (bookmark tag))
 
