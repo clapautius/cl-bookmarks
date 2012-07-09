@@ -1,6 +1,8 @@
 (defpackage :cl-bookmarks-conv
-  (:use :common-lisp :cl-bookmarks)
+  (:use :common-lisp :cl-bookmarks :json-system)
   (:export :dlc-parse-file
+           :delicious-to-firefox
+           :frx-json-parse-file
            :delicious-to-firefox))
 
 

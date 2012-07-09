@@ -6,16 +6,12 @@
 (in-package :cl-bookmarks-system)
 
 (require 'clsql-sqlite3)
-(require 'cl-json)
 
 (asdf:defsystem :cl-bookmarks
     :components ((:file "package")
                  (:file "cl-bookmarks"
                         :depends-on ("package"))
                  (:file "firefox"
-                        :depends-on ("package"
-                                     "cl-bookmarks"))
-                 (:file "firefox-json"
                         :depends-on ("package"
                                      "cl-bookmarks"))))
 

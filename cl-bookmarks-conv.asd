@@ -7,7 +7,7 @@
 
 (require 'cl-bookmarks)
 (require 'closure-html)
-
+(require 'cl-json)
 
 (asdf:defsystem :cl-bookmarks-conv
     :components ((:file "package-conv")
@@ -15,7 +15,10 @@
                         :depends-on ("package-conv"))
                  (:file "conversions"
                         :depends-on ("package-conv"
-                                     "delicious"))))
+                                     "delicious"))
+                 (:file "firefox-json"
+                        :depends-on ("package-conv"
+                                     "cl-bookmarks"))))
 
 
 ;;; * emacs display settings *
