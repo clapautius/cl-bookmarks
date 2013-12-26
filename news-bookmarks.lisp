@@ -7,10 +7,8 @@
 ;;;; some other method).
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (with-open-file (*standard-output* "/dev/null" :direction :output
-                                     :if-exists :supersede)
-    (with-open-file (*error-output* "/dev/null" :direction :output
-                                    :if-exists :supersede)
+  (with-open-file (*standard-output* "/dev/null" :direction :output :if-exists :supersede)
+    (with-open-file (*error-output* "/dev/null" :direction :output :if-exists :supersede)
       (asdf:operate 'asdf:load-op :cl-bookmarks))))
 
 
@@ -71,7 +69,9 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
   (cl-bookmarks:frx-open-file firefox-bookmarks)
   (let* ((links-to-visit
           (remove-if (lambda (a) (cl-bookmarks:bookm-has-tag-p a "subscribed"))
-                     (cl-bookmarks:frx-get-bookm-by-tags '("news"))))
+                     ;; t = skip-title = CGIs have issues with utf8 chars from titles
+                     ;; :fixme:
+                     (cl-bookmarks:frx-get-bookm-by-tags '("news") t)))
          (min-priority (* 24 3600 365))
          (visited (news-load-visited-times visited-file))
          min-priority-link priority error-msg)
@@ -139,22 +139,30 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
   (let* ((exit-code 0)
          (proc (sb-ext:run-program "find"
                                    (list (concatenate 'string home "/.mozilla/firefox/")
-                                         "-name" "Cache" "-prune" "-o" "-name"
-                                         "places.sqlite" "-print")
-                                   :search t :output :stream)))
+                                         "-name" "Cache" "-prune" "-o"
+                                         "-name" "bookmarkbackups" "-prune" "-o"
+                                         "-name" "OfflineCache" "-prune" "-o"
+                                         "-name" "mozilla-media-cache" "-prune" "-o"
+                                         "-name" "places.sqlite" "-print")
+                                   :search t :output :stream :error nil)))
     (format t "Content-Type: text/html~%~%")
     (if (zerop (process-exit-code proc))
         (let ((firefox-places (read-line (process-output proc))))
           (print-news-link-as-html firefox-places
                                    (concatenate 'string home "/" ".news-bookmarks.s")))
-      (progn
-        (setf exit-code 1)
-        (format t "<p style=\"text-color: red;\"Error (local error)</p>")))
+        (progn
+          (setf exit-code 1)
+          (format t "<html><body><p style=\"text-color: red;\"Error (local error)</p>
+</body></html>")))
     (when exit
       (sb-ext:exit :code exit-code))))
 
 
-(defun cgi ()
+(export 'cgi)
+
+(defun cgi (&optional args)
+  ;; ARGS - needed for buildapp
+  (declare (ignore args))
   (cgi-display-news-as-html "/home/me"))
 
 ;;; * emacs display settings *

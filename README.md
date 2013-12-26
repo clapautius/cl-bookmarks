@@ -28,6 +28,10 @@ In SLIME / lisp compiler: <code>(asdf:oos 'asdf:load-op 'cl-bookmarks-conv)</cod
 * Read the report and check the results in firefox.
 * Restore the backup and repeat if something went wrong.
 
+#### Build news-bookmarks (as a cgi app)
+
+buildapp --load ~/.sbclrc --load news-bookmarks.lisp --entry cgi --output news-bookmarks.cgi
+
 ## Development
 
 ### Firefox sqlite db. internals
