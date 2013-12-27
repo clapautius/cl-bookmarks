@@ -66,78 +66,86 @@
   "Return the bookmark tagged with 'news' having the highest priority.
 Return nil if there are problems with 'news' bookmarks (in this case the second value will
   contain the warning / error message."
-  (cl-bookmarks:frx-open-file firefox-bookmarks)
-  (let* ((links-to-visit
-          (remove-if (lambda (a) (cl-bookmarks:bookm-has-tag-p a "subscribed"))
-                     ;; t = skip-title = CGIs have issues with utf8 chars from titles
-                     ;; :fixme:
-                     (cl-bookmarks:frx-get-bookm-by-tags '("news") t)))
-         (min-priority (* 24 3600 365))
-         (visited (news-load-visited-times visited-file))
-         min-priority-link priority error-msg)
-    (handler-case 
-        (dolist (link links-to-visit)
-          (setf priority (+ (news-visited-time visited (cl-bookmarks:url link))
-                            (- (get-universal-time))
-                            (* 24 3600 ; days to seconds
-                               (cond
-                                 ((cl-bookmarks:bookm-has-tag-p link "news-weekly")
-                                  7)
-                                 ((cl-bookmarks:bookm-has-tag-p link "news-twice-a-month")
-                                  15)
-                                 ((cl-bookmarks:bookm-has-tag-p link "news-monthly")
-                                  30)
-                                 ((cl-bookmarks:bookm-has-tag-p link "news-bimonthly")
-                                  60)
-                                 ((cl-bookmarks:bookm-has-tag-p link "news-sometimes")
-                                  90)
-                                 (t
-                                  (setf error-msg "No duration tag for bookmark")
-                                  (error 'invalid-news-bookmark
-                                         :bookm link
-                                         :error-msg error-msg))))))
-          (when (< priority min-priority)
-            (setf min-priority priority)
-            (setf min-priority-link link)))
-      (invalid-news-bookmark (e)
-        (setf min-priority-link (bookm e))
-        (setf min-priority nil)
-        (setf error-msg (error-msg e))))
-    (cl-bookmarks:frx-close-file)
-    ;; update visited time if everything ok
-    (when min-priority
-      (news-update-visited-time visited (cl-bookmarks:url min-priority-link))
-      (news-save-visited-times visited visited-file))
-    (values min-priority-link error-msg)))
+  (let (links)
+    (cl-bookmarks:frx-open-file firefox-bookmarks)
+    (unwind-protect (setf links (cl-bookmarks:frx-get-bookm-by-tags '("news")))
+      (cl-bookmarks:frx-close-file))
+    (let* ((links-to-visit
+            (remove-if (lambda (a) (cl-bookmarks:bookm-has-tag-p a "subscribed"))
+                       links))
+           (min-priority (* 24 3600 365))
+           (visited (news-load-visited-times visited-file))
+           min-priority-link priority error-msg)
+      (handler-case 
+       (dolist (link links-to-visit)
+         (setf priority (+ (news-visited-time visited (cl-bookmarks:url link))
+                           (- (get-universal-time))
+                           (* 24 3600 ; days to seconds
+                              (cond
+                               ((cl-bookmarks:bookm-has-tag-p link "news-weekly")
+                                7)
+                               ((cl-bookmarks:bookm-has-tag-p link "news-twice-a-month")
+                                15)
+                               ((cl-bookmarks:bookm-has-tag-p link "news-monthly")
+                                30)
+                               ((cl-bookmarks:bookm-has-tag-p link "news-bimonthly")
+                                60)
+                               ((cl-bookmarks:bookm-has-tag-p link "news-sometimes")
+                                90)
+                               (t
+                                (setf error-msg "No duration tag for bookmark")
+                                (error 'invalid-news-bookmark
+                                       :bookm link
+                                       :error-msg error-msg))))))
+         (when (< priority min-priority)
+           (setf min-priority priority)
+           (setf min-priority-link link)))
+       (invalid-news-bookmark (e)
+                              (setf min-priority-link (bookm e))
+                              (setf min-priority nil)
+                              (setf error-msg (error-msg e))))
+      ;; update visited time if everything ok
+      (when min-priority
+        (news-update-visited-time visited (cl-bookmarks:url min-priority-link))
+        (news-save-visited-times visited visited-file))
+      (values min-priority-link error-msg))))
 
 
-(defun print-news-link-as-txt (&optional (firefox-bookmarks "places.sqlite")
-                                 (visited-file ".news-bookmarks.s"))
-  "Print a link."
-  (multiple-value-bind (bookm problem) (frx-get-news-link firefox-bookmarks visited-file)
-    (if problem
-        (format t "~a: ~a~%" problem (cl-bookmarks:url bookm))
-        (format t "~a~%" (cl-bookmarks:url bookm)))))
+(defun print-news-link-as-txt (bookm error-msg)
+  "Print a link (text format).
+If ERROR-MSG is nil then there was no problem (BOOKMARK must not be nil).
+If ERROR-MSG is non-nil and BOOKMARK is nil, there was a generic problem (IO, network).
+If ERROR-MSG is non-nil and BOOKMARK is non-nil, there was a problem with the specified
+bookmark."
+  (if error-msg
+      (if bookm
+          (format t "Error: ~a: ~a~%" error-msg (cl-bookmarks:url bookm))
+        (format t "Error: ~a~%" error-msg))
+    (format t "~a~%" (cl-bookmarks:url bookm))))
 
 
-(defun print-news-link-as-html (&optional (firefox-bookmarks "places.sqlite")
-                                 (visited-file ".news-bookmarks.s"))
-  "Print a link (HTML format)."
-  (multiple-value-bind (bookm problem) (frx-get-news-link firefox-bookmarks visited-file)
-    (format t "<html><head><title>News link</title></head><body>~%")
-    (let ((link (cl-bookmarks:url bookm)))
-      (if problem
-          (format t "  <p style=\"text-color: red; font-weight: bold\">Error: ~a: \
-<a href=\"~a\">~a</a></p>~%" problem link link)
-        (format t "  <a href=\"~a\">~a</a>" link link)))
-    (format t "~%</body></html>~%")))
+(defun print-news-link-as-html (bookm error-msg)
+  "Print a link (HTML format).
+If ERROR-MSG is nil then there was no problem (BOOKMARK must not be nil).
+If ERROR-MSG is non-nil and BOOKMARK is nil, there was a generic problem (IO, network).
+If ERROR-MSG is non-nil and BOOKMARK is non-nil, there was a problem with the specified
+bookmark."
+  (format t "<html><head><title>News link</title></head><body>~%")  
+  (if error-msg
+      (if bookm
+          (format t "  <p style=\"text-color: red; font-weight: bold\">Error: ~a. Link:\
+ <a href=\"~a\">~a</a></p>~%" error-msg (cl-bookmarks:url bookm) (cl-bookmarks:url bookm))
+        (format t "  <p style=\"text-color: red; font-weight: bold\">Error: ~a.</p>~%"
+                error-msg))
+    (format t "  <a href=\"~a\">~a</a>"
+            (cl-bookmarks:url bookm) (cl-bookmarks:url bookm)))
+  (format t "~%</body></html>~%"))
 
 
-(defun cgi-display-news-as-html (&optional home (exit t))
-  (when (null home)
-    (setf home (sb-ext:posix-getenv "HOME")))
-  (let* ((exit-code 0)
-         (proc (sb-ext:run-program "find"
+(defun find-frx-places (home)
+  "Find 'places.sqlite' in the specified HOME dir. Return its full path or nil on
+error."
+  (let* ((proc (sb-ext:run-program "find"
                                    (list (concatenate 'string home "/.mozilla/firefox/")
                                          "-name" "Cache" "-prune" "-o"
                                          "-name" "bookmarkbackups" "-prune" "-o"
@@ -145,15 +153,33 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
                                          "-name" "mozilla-media-cache" "-prune" "-o"
                                          "-name" "places.sqlite" "-print")
                                    :search t :output :stream :error nil)))
-    (format t "Content-Type: text/html~%~%")
-    (if (zerop (process-exit-code proc))
-        (let ((firefox-places (read-line (process-output proc))))
-          (print-news-link-as-html firefox-places
-                                   (concatenate 'string home "/" ".news-bookmarks.s")))
-        (progn
-          (setf exit-code 1)
-          (format t "<html><body><p style=\"text-color: red;\"Error (local error)</p>
-</body></html>")))
+    ;;(format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
+    (when (zerop (process-exit-code proc))
+      (read-line (process-output proc)))))
+
+
+(defun display-news-link (format &optional home exit)
+  "FORMAT can be :text or :html.
+If HOME is not specified, it is read from environment."
+  (when (null home)
+    (setf home (sb-ext:posix-getenv "HOME")))
+  (let* (bookm problem
+         (exit-code 0)
+         (frx-places (find-frx-places home))
+         (visited-file (concatenate 'string home "/" ".news-bookmarks.s")))
+    (if frx-places
+        (multiple-value-setq (bookm problem)
+          (frx-get-news-link frx-places visited-file))
+      (progn
+        (setf exit-code 1)
+        (setf problem "Error finding places.sqlite")))
+    (cond
+     ((eq format :text)
+      (print-news-link-as-txt bookm problem))
+     ((eq format :html)
+      (print-news-link-as-html bookm problem))
+     (t ;; fallback -> text
+      (print-news-link-as-txt bookm problem)))
     (when exit
       (sb-ext:exit :code exit-code))))
 
@@ -163,7 +189,10 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
 (defun cgi (&optional args)
   ;; ARGS - needed for buildapp
   (declare (ignore args))
-  (cgi-display-news-as-html "/home/me"))
+  (setq sb-impl::*default-external-format* :utf-8)
+  ;; HTTP headers
+  (format t "Content-Type: text/html~%~%")
+  (display-news-link :html "/home/me" t))
 
 ;;; * emacs display settings *
 ;;; Local Variables:
