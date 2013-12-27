@@ -7,9 +7,7 @@
 ;;;; some other method).
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (with-open-file (*standard-output* "/dev/null" :direction :output :if-exists :supersede)
-    (with-open-file (*error-output* "/dev/null" :direction :output :if-exists :supersede)
-      (asdf:operate 'asdf:load-op :cl-bookmarks))))
+  (asdf:operate 'asdf:load-op :cl-bookmarks))
 
 
 (defun news-load-visited-times (visited-file-path)
