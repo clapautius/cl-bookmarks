@@ -17,8 +17,7 @@
                         :depends-on ("package-conv"
                                      "delicious"))
                  (:file "firefox-json"
-                        :depends-on ("package-conv"
-                                     "cl-bookmarks"))))
+                        :depends-on ("package-conv"))))
 
 
 ;;; * emacs display settings *
