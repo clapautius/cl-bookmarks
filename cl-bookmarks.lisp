@@ -21,17 +21,17 @@
    ;; creation time - in lisp format
    (c-time :accessor c-time
            :initarg :c-time
-           :initform (get-universal-time))
+           :initform 0)
 
    ;; modification time - in lisp format
    (m-time :accessor  m-time
            :initarg :m-time
-           :initform (get-universal-time))
+           :initform 0)
 
    ;; last visit time - in lisp format
    (v-time :accessor v-time
            :initarg :v-time
-           :initform (get-universal-time))
+           :initform 0)
 
    ;; list of tags
    (tags :accessor tags

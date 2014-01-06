@@ -5,10 +5,13 @@
            :*cl-bookmarks-debug*
            :*cl-bookmarks-trace-sql*
            :v-time
+           :c-time
+           :m-time
            :url
            :frx-open-file 
            :frx-close-file
-           :frx-add-bookm 
+           :frx-add-bookm
+           :frx-get-all-bookm
            :frx-get-bookm-by-url
            :frx-get-bookm-by-tags))
 

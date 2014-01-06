@@ -7,7 +7,7 @@
   (defun init-bookm-hash-table ()
     (setf all-bookmarks (make-hash-table :test 'equal)))
 
-  (defun add-or-update-bookm (uri title &optional tag)
+  (defun add-or-update-bookm (uri title c-time m-time &optional tag)
     "Add or update a bookmark in all-bookmarks hash table"
     (let ((existing-bookm (gethash uri all-bookmarks)))
       (if existing-bookm
@@ -17,13 +17,20 @@
               (setf (title existing-bookm) title))
             ;; add tag
             (when (not (bookm-has-tag-p existing-bookm tag))
-              (bookm-add-tag existing-bookm tag)))
+              (bookm-add-tag existing-bookm tag))
+            ;; update c-time or m-time
+            (when (zerop (c-time existing-bookm))
+              (setf (c-time existing-bookm) c-time))
+            (when (zerop (m-time existing-bookm))
+              (setf (m-time existing-bookm) m-time)))
           (progn
             (setf (gethash uri all-bookmarks)
                   (if tag
                       (make-instance 'bookmark :url uri :title title
+                                     :c-time c-time :m-time m-time
                                      :tags (list tag))
-                      (make-instance 'bookmark :url uri :title title)))))))
+                      (make-instance 'bookmark :url uri :title title
+                                     :c-time c-time :m-time m-time)))))))
 
   (defun get-bookm-sorted-by-uri ()
     "Return a list of bookmarks sorted alphabetically by uri"
@@ -80,9 +87,20 @@
 (defun do-json-uri (obj tag)
   "Analyze a json uri"
   ;;(format t "Found a uri with name ~a~%" (slot-value obj 'title))
-  (let ((uri (slot-value obj 'uri))
-        (title (slot-value obj 'title)))
-    (add-or-update-bookm uri title tag)))
+  (handler-case
+      (let ((uri (slot-value obj 'uri))
+            (title (slot-value obj 'title))
+            (c-time (from-frx-time (if (slot-boundp obj 'date-added)
+                                       (slot-value obj 'date-added)
+                                       0)))
+            (m-time (from-frx-time (if (slot-boundp obj 'last-modified)
+                                       (slot-value obj 'last-modified)
+                                       0))))
+        (add-or-update-bookm uri title c-time m-time tag))
+    (condition (c)
+      (format t "Error parsing bookmark ~a with title ~a (error: ~a)~%"
+              obj (slot-value obj 'title) c)
+      (error c))))
 
 
 (defun frx-json-parse-file (filename)
@@ -106,5 +124,11 @@ bookmarks (sorted by uri)."
       (dolist (bookm bookm-list)
         (if print-bookm
             (funcall print-bookm bookm output)
-            (format output "~a~%~a~%~a~%"
-                    (url bookm) (title bookm) (sort (tags bookm) 'string<)))))))
+            (format output "~a~%~a~%~a~%c-time ~a ~a m-time ~a ~a~%"
+                    (url bookm) (title bookm) (sort (tags bookm) 'string<)
+                    (c-time bookm)
+                    (subseq (multiple-value-list (decode-universal-time (c-time bookm)))
+                            0 6)
+                    (m-time bookm)
+                    (subseq (multiple-value-list (decode-universal-time (m-time bookm)))
+                            0 6)))))))

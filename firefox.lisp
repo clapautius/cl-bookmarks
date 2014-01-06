@@ -60,6 +60,51 @@ nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
   ) ; end frx-tags closure
 
 
+(defun frx-get-all-bookm (&optional skip-title)
+  (when *cl-bookmarks-debug*
+    (format t ":debug: searching for all bookmarks"))
+  (let* ((query
+          (if skip-title
+              (format nil "select url, fk, last_visit_date, dateAdded,
+lastModified, parent from moz_bookmarks b, moz_places p where fk=p.id")
+              (format nil "select b.title, url, fk, last_visit_date, dateAdded,
+lastModified, parent from moz_bookmarks b, moz_places p where fk=p.id")))
+         (results (clsql:query query :field-names nil))
+         bookmark all-bookmarks parent)
+    (when *cl-bookmarks-trace-sql*
+      (format t ":debug: ~a~%" query))
+    (dolist (bookm-sql results)
+      (when *cl-bookmarks-trace-sql*
+        (format t ":debug: parsing bookm ~a~%" bookm-sql))
+      (setf parent (nth (if skip-title 5 6) bookm-sql))
+      (when (eq (frx-get-type-of-elt parent) :bookmark)
+        (setf bookmark
+              (if skip-title
+                  (make-instance 'bookmark
+                                 :url (first bookm-sql)
+                                 :v-time (from-frx-time (nth 2 bookm-sql))
+                                 :c-time (from-frx-time (nth 3 bookm-sql))
+                                 :m-time (from-frx-time (nth 4 bookm-sql)))
+                  (make-instance 'bookmark :title (first bookm-sql)
+                                 :url (second bookm-sql)
+                                 :v-time (from-frx-time (nth 3 bookm-sql))
+                                 :c-time (from-frx-time (nth 4 bookm-sql))
+                                 :m-time (from-frx-time (nth 5 bookm-sql)))))
+        ;; get tags
+        (let* ((fk-pos (if skip-title 1 2))
+               (query (format nil "select b.title from
+moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
+                              (nth fk-pos bookm-sql)))
+               (tags (clsql:query query :field-names nil)))
+          (when *cl-bookmarks-trace-sql*
+            (format t ":debug: ~a~%" query)
+            (format t ":debug: tags: ~a~%" tags))
+          (dolist (tag tags)
+            (bookm-add-tag bookmark (car tag)))
+          (setf all-bookmarks (cons bookmark all-bookmarks)))))
+    all-bookmarks))
+
+
 (defun frx-get-bookm-by-id (id &optional skip-title)
   "Return a bookmark object from the firefox database."
   (when (null id)
@@ -68,25 +113,28 @@ nil if the tag does not exist and cannot be added (if-not-exist is :skip)."
       (format t ":debug: searching for bookm with id=~a~%" id))
   (let* ((query
           (if skip-title
-              (format nil "select url, fk, last_visit_date 
-from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id)
-              (format nil "select p.title, url, fk, last_visit_date 
-from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id)))
+              (format nil "select url, fk, last_visit_date, dateAdded,
+lastModified from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id)
+              (format nil "select b.title, url, fk, last_visit_date, dateAdded,
+lastModified from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id)))
          (results (clsql:query query :field-names nil))
          bookmark)
     (when *cl-bookmarks-trace-sql*
       (format t ":debug: ~a~%" query))
     (when *cl-bookmarks-debug*
       (format t ":debug: found bookm with id ~a: ~a~%" id results))
-    ;; :fixme: - add time values
     (setf bookmark
           (if skip-title
           (make-instance 'bookmark
                          :url (first (car results))
-                         :v-time (from-frx-time (nth 2 (car results))))
+                         :v-time (from-frx-time (nth 2 (car results)))
+                         :c-time (from-frx-time (nth 3 (car results)))
+                         :m-time (from-frx-time (nth 4 (car results))))
           (make-instance 'bookmark :title (first (car results))
                          :url (second (car results))
-                         :v-time (from-frx-time (nth 3 (car results))))))
+                         :v-time (from-frx-time (nth 3 (car results)))
+                         :c-time (from-frx-time (nth 4 (car results)))
+                         :m-time (from-frx-time (nth 5 (car results))))))
     ;; get tags
     (let* ((fk-pos (if skip-title 1 2))
            (query (format nil "select b.title from
@@ -299,6 +347,28 @@ return 0."
       (when report
         (print-report report-total report-tags)))
     (frx-close-file)))
+
+
+(defun frx-sqlite-to-txt (sqlite-fname txt-fname)
+  "Read bookmarks from SQLITE-FILE and print them to TXT-FILE."
+  (flet ((read-bookm-from-sqlite (sqlite-fname)
+           (let (links)
+             (cl-bookmarks:frx-open-file sqlite-fname)
+             (unwind-protect (setf links (cl-bookmarks:frx-get-all-bookm))
+               (cl-bookmarks:frx-close-file))
+             (sort links (lambda (a b) (string< (url a) (url b)))))))
+           
+    (let ((bookm-list (read-bookm-from-sqlite sqlite-fname)))
+      (with-open-file (output txt-fname :direction :output :if-exists :supersede)
+        (dolist (bookm bookm-list)
+          (format output "~a~%~a~%~a~%c-time ~a ~a m-time ~a ~a~%"
+                  (url bookm) (title bookm) (sort (tags bookm) 'string<)
+                  (c-time bookm)
+                  (subseq (multiple-value-list (decode-universal-time (c-time bookm)))
+                          0 6)
+                  (m-time bookm)
+                  (subseq (multiple-value-list (decode-universal-time (m-time bookm)))
+                          0 6)))))))
 
 
 ;;; * emacs display settings *
