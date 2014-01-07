@@ -1,0 +1,94 @@
+Bookmarks with issues in places.sqlite
+______________________________________
+
+
+- they exist in json file but not in bookmarks extracted from sqlite
+- cannot be found by search (in bookmark manager)
+
+* Bookmark with issues
+
+sqlite> select * from moz_places where url like '%Protected_mode%';
+30918|http://en.wikipedia.org/wiki/Protected_mode|Protected mode - Wikipedia, the free encyclopedia|gro.aidepikiw.ne.|0|0|0||134||kS33U1_x1cZ3
+
+sqlite> select * from moz_bookmarks where fk = 30918;
+24058|1|30918|22484|1||||1329653909055627|1329653909055627|r8xunw_TGbcn
+24059|1|30918|21956|18||||1329653909057061|1329653909057061|63d2ytgdJmNp
+
+sqlite> select * from moz_bookmarks where id = 22484 or id = 21956;
+21956|2||4|20|filemedic|||1327772620277608|1370189376292643|m4ppvb50WofE
+22484|2||4|33|0-pending|||1327772620883508|1388849380312180|zWxcDadcLfqh
+
+* Another bookmark with issues
+
+sqlite> select * from moz_places where url like '%gapingvoid%';
+35608|http://gapingvoid.com/ie/|ignore everybody | gapingvoid|moc.diovgnipag.|0|0|0||134||AmJKwtoA7Yni
+
+sqlite> select * from moz_bookmarks where fk = 35608;
+24237|1|35608|22484|4||||1332424335415539|1332424335415539|7v4G07RxaHdM
+
+sqlite> select * from moz_bookmarks where id = 22484;
+22484|2||4|33|0-pending|||1327772620883508|1388849380312180|zWxcDadcLfqh
+
+* Bookmark without issues
+
+sqlite> select * from moz_places where url like '%dxomark%';
+17548|http://www.dxomark.com/index.php||moc.kramoxd.www.|0|0|0||134||B0DHgByCE6iO
+
+sqlite> select * from moz_bookmarks where fk = 17548;
+17791|1|17548|17391|393|DxOMark - Welcome to DxOMark (image quality tests for lenses and sensors)|||1326571858284203|1326572038315522|8POzeNebj0-h
+21986|1|17548|21974|11||||1327772620308940|1327772620308940|Y30MJxTzf60l
+
+sqlite> select * from moz_bookmarks where id = 17391 or id = 21974;
+17391|2||2|1|tags|||1326572025115922|1389037362113074|E-lW9hJI8j6i
+21974|2||4|21|foto-hardware|||1327772620296649|1333526292551454|8E3UbMtLrIyr
+
+* Another bookmark without issues
+
+sqlite> select * from moz_places where url like '%www.hotnews.ro/';
+18685|http://www.hotnews.ro/|HotNews.ro - Actualitate|or.swentoh.www.|46|0|0|1|6900|1389041258728450|5UNAEEUC7f-T
+
+sqlite> select * from moz_bookmarks where fk = 18685;
+27236|1|18685|22985|2||||1373809299223499|1373809299223499|Wrz1jPdqqWh4
+27237|1|18685|22284|105||||1373809299224220|1373809299224220|SoiB8dt9BDDN
+27238|1|18685|23405|29||||1373809299225128|1373809299225128|fOlexr1j8qln
+27232|1|18685|17391|2878|HotNews.ro - Actualitate|||1373809299215845|1373809299227759|kCWSYSk19mtC
+
+sqlite> select * from moz_bookmarks where id = 22985 or id = 22284 or id = 23405 or id = 17391;                                                                                  
+17391|2||2|1|tags|||1326572025115922|1389037362113074|E-lW9hJI8j6i                                                                                                               
+22284|2||4|28|news|||1327772620652971|1388849381012739|Ypp8wOhZF04S                                                                                                              
+22985|2||4|51|0-news-daily-1|||1327772621654345|1388849380337626|H_hvXa3Qf0tt                                                                                                    
+23405|2||4|80|subscribed|||1327772622282667|1385115309711993|qELxxhG0r9fk
+
+* Bookmark without issues (in 'Unsorted bookmarks')
+
+sqlite> select * from moz_places where url like '%neilcook.hubpages.com/%';
+130663|http://neilcook.hubpages.com/hub/Sit-up-Straight-Proper-Posture-for-Computer-Use|Sit up Straight! Proper Posture for Computer Use|moc.segapbuh.kooclien.|0|0|0|6960|134||_cM5F-1K-bHu
+
+sqlite> select * from moz_bookmarks where fk = 130663;
+27679|1|130663|27677|0||||1384105246107055|1384105246107055|qUp9Wo0E8fnH
+27676|1|130663|5|0|Sit up Straight! Proper Posture for Computer Use|||1384105246092772|1384105246111004|KbwKwzyDngot
+
+sqlite> select * from moz_bookmarks where id = 27677 or id = 5;
+    5|2||1|6|Unsorted Bookmarks|||1318255629389801|1389037362110589|XI26oiBdrY1b
+27677|2||4|170|1-ergonomics|||1384105246102487|1384105246129948|bDWLrZsZdghp
+
+* It seems the problem is that the incorrect bookmarks don't have at least one parent with
+parent id 1 or 2.
+  Opening the link, then clicking the 'star' and then 'Cancel' solves the issue (deletes
+the bookmark).
+  In case editing is not possible (the site redirects to a new url), use 'History manager'
+to locate the bookmark, edit it (add a tag or something) and then delete it from
+'Bookmarks Manager' (deleting it from 'History manager doesn't work).
+
+* The problem appears to be related to deleted bookmarks (maybe a sync issue?).
+
+moz_places
+__________
+
+id | url | title | rev_host | ...
+
+
+moz_bookmarks
+_____________
+
+id | type | fk | parent | position | title | ...

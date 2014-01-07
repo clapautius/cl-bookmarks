@@ -39,3 +39,7 @@ buildapp --load ~/.sbclrc --load news-bookmarks.lisp --entry cgi --output news-b
 * '''PRTime''' : This type is a 64-bit integer representing the number of microseconds since the NSPR epoch, midnight (00:00:00) 1 January 1970 Coordinated Universal Time (UTC). A time after the epoch has a positive value, and a time before the epoch has a negative value. (https://developer.mozilla.org/en/PRTime)
 
 * A bookmark folder (in moz_bookmarks table) has type = 2 & parent != 4.
+
+* moz_bookmarks.type
+ = 2 for bookmark folder (or tag?)
+ = 1 for bookmark

@@ -13,7 +13,8 @@
            :frx-add-bookm
            :frx-get-all-bookm
            :frx-get-bookm-by-url
-           :frx-get-bookm-by-tags))
+           :frx-get-bookm-by-tags
+           :frx-check-invalid-bookmarks))
 
 
 ;;; * emacs display settings *

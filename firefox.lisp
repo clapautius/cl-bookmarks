@@ -371,6 +371,19 @@ return 0."
                           0 6)))))))
 
 
+(defun frx-check-invalid-bookmarks (sqlite-fname)
+  "Find bookmarks that appear in json output but cannot be found in 'Bookmark manager'
+ (see README for details)."
+  (cl-bookmarks:frx-open-file sqlite-fname)
+  (let* ((query (format nil "select fk, url from moz_bookmarks b, moz_places p
+where fk = p.id"))
+         (results (clsql:query query :field-names nil)))
+    (dolist (result results)
+      (when (not (frx-get-bookm-by-url (second result)))
+        (format t "Error for url ~a~%" (second result)))))
+  (cl-bookmarks:frx-close-file))
+
+
 ;;; * emacs display settings *
 ;;; Local Variables:
 ;;; default-tab-width: 4
