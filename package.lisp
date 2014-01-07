@@ -10,6 +10,7 @@
            :url
            :frx-open-file 
            :frx-close-file
+           :frx-sqlite-to-txt
            :frx-add-bookm
            :frx-get-all-bookm
            :frx-get-bookm-by-url

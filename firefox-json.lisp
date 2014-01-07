@@ -115,7 +115,7 @@ bookmarks (sorted by uri)."
   (get-bookm-sorted-by-uri))
 
 
-(defun frx-json-save-to-txt (json-fname txt-fname &optional print-bookm)
+(defun frx-json-to-txt (json-fname txt-fname &optional print-bookm)
   "Parse a json file and save all bookmarks to txt-fname (using print-bookm
   function if provided or in standard format: url, title and tags, each one of
   these on a line"
