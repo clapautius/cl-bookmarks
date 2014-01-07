@@ -79,7 +79,7 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
          (setf priority (+
                          ;; try last-visit time, then m-time and then c-time
                          (or (news-visited-time visited (cl-bookmarks:url link))
-                             (cl-bookmarks:m-time link) (cl-bookmarks: c-time link))
+                             (cl-bookmarks:m-time link) (cl-bookmarks:c-time link))
                          (- (get-universal-time))
                          (* 24 3600 ; days to seconds
                             (cond
