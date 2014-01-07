@@ -75,7 +75,7 @@ lastModified, parent from moz_bookmarks b, moz_places p where fk=p.id")))
       (format t ":debug: ~a~%" query))
     (dolist (bookm-sql results)
       (when *cl-bookmarks-trace-sql*
-        (format t ":debug: parsing bookm ~a~%" bookm-sql))
+        (format t ":debug:frx-get-all-bookm: parsing bookm ~a~%" bookm-sql))
       (setf parent (nth (if skip-title 5 6) bookm-sql))
       (when (eq (frx-get-type-of-elt parent) :bookmark)
         (setf bookmark
@@ -101,7 +101,9 @@ moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
             (format t ":debug: tags: ~a~%" tags))
           (dolist (tag tags)
             (bookm-add-tag bookmark (car tag)))
-          (setf all-bookmarks (cons bookmark all-bookmarks)))))
+          (setf all-bookmarks (cons bookmark all-bookmarks)))
+        (when *cl-bookmarks-debug*
+          (format t ":debug:frx-get-all-bookm: resulted bookm: ~a~%" bookmark))))
     all-bookmarks))
 
 
@@ -121,7 +123,7 @@ lastModified from moz_bookmarks b, moz_places p where fk=p.id and b.id=~a" id)))
          bookmark)
     (when *cl-bookmarks-trace-sql*
       (format t ":debug: ~a~%" query))
-    (when *cl-bookmarks-debug*
+    (when *cl-bookmarks-trace-sql*
       (format t ":debug: found bookm with id ~a: ~a~%" id results))
     (setf bookmark
           (if skip-title
@@ -147,6 +149,9 @@ moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
         (format t ":debug: tags if bookm id ~a: ~a~%" id results))
       (dolist (result results)
         (bookm-add-tag bookmark (car result))))
+    ;; print debug stuff
+    (when *cl-bookmarks-debug*
+      (format t ":debug:frx-get-bookm-by-id: resulted bookm: ~a~%" bookmark))
     bookmark))
 
 

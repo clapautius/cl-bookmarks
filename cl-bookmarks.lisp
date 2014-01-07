@@ -42,9 +42,9 @@
 
 (defmethod print-object ((bookmark bookmark) stream)
   "Print the bookmark object to the specified stream"
-  (format stream "<bookm: ~a, url=~a, ct=~a, vt=~a,~%  tags: ~a>"
+  (format stream "<bookm: ~a, url=~a~%  vt=~a, ct=~a, mt=~a~%  tags: ~a>"
           (shorten (title bookmark)) (shorten (url bookmark) 35)
-          (date-str (c-time bookmark)) (date-str (v-time bookmark))
+          (v-time bookmark) (c-time bookmark) (m-time bookmark)
           (tags bookmark)))
 
 

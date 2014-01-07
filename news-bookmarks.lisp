@@ -76,31 +76,40 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
            min-priority-link priority error-msg)
       (handler-case 
        (dolist (link links-to-visit)
-         (setf priority (+
-                         ;; try last-visit time, then m-time and then c-time
-                         (or (news-visited-time visited (cl-bookmarks:url link))
-                             (cl-bookmarks:m-time link) (cl-bookmarks:c-time link))
-                         (- (get-universal-time))
-                         (* 24 3600 ; days to seconds
-                            (cond
-                              ((cl-bookmarks:bookm-has-tag-p link "news-weekly")
-                               7)
-                              ((cl-bookmarks:bookm-has-tag-p link "news-twice-a-month")
-                               15)
-                              ((cl-bookmarks:bookm-has-tag-p link "news-monthly")
-                               30)
-                              ((cl-bookmarks:bookm-has-tag-p link "news-bimonthly")
-                               60)
-                              ((cl-bookmarks:bookm-has-tag-p link "news-sometimes")
-                               90)
-                              (t
-                               (setf error-msg "No duration tag for bookmark")
-                               (error 'invalid-news-bookmark
-                                      :bookm link
-                                      :error-msg error-msg))))))
-         (when (< priority min-priority)
-           (setf min-priority priority)
-           (setf min-priority-link link)))
+         ;; try last-visit time, then m-time and then c-time
+         (let ((last-visit (news-visited-time visited (cl-bookmarks:url link))))
+           (when (zerop last-visit)
+             ;;(format t "~a: last-visit is 0, using m-time (~a)~%"
+                     ;;(cl-bookmarks:url link) (cl-bookmarks:m-time link))
+             (setf last-visit (cl-bookmarks:m-time link)))
+           (when (zerop last-visit)
+             ;;(format t "~a: last-visit is 0, using c-time (~a)~%"
+                     ;;(cl-bookmarks:url link) (cl-bookmarks:m-time link))
+             (setf last-visit (cl-bookmarks:c-time link)))
+           (setf priority (+ last-visit
+                             (- (get-universal-time))
+                             (* 24 3600 ; days to seconds
+                                (cond
+                                  ((cl-bookmarks:bookm-has-tag-p link "news-weekly")
+                                   7)
+                                  ((cl-bookmarks:bookm-has-tag-p link "news-twice-a-month")
+                                   15)
+                                  ((cl-bookmarks:bookm-has-tag-p link "news-monthly")
+                                   30)
+                                  ((cl-bookmarks:bookm-has-tag-p link "news-bimonthly")
+                                   60)
+                                  ((cl-bookmarks:bookm-has-tag-p link "news-sometimes")
+                                   90)
+                                  (t
+                                   (setf error-msg "No duration tag for bookmark")
+                                   (error 'invalid-news-bookmark
+                                          :bookm link
+                                          :error-msg error-msg))))))
+           ;;(format t "Link: ~a, last-visit=~a, priority=~a~%"
+                   ;;(cl-bookmarks:url link) last-visit priority)
+           (when (< priority min-priority)
+             (setf min-priority priority)
+             (setf min-priority-link link))))
        (invalid-news-bookmark (e)
                               (setf min-priority-link (bookm e))
                               (setf min-priority nil)
