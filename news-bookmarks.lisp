@@ -1,7 +1,10 @@
 ;;;; Functions for managing firefox bookmarks tagged with 'news' tag (news, news_weekly,
 ;;;; etc.)
 
-;;;; usage (with sbcl): sbcl --noinform --load news-bookmarks.lisp --eval "(cgi)"
+;;;; Usage (with sbcl): sbcl --noinform --load news-bookmarks.lisp --eval "(cgi)"
+
+;;;; Making an executable using buildapp (tested on debian 7):
+;;;; buildapp --require asdf --load news-bookmarks.lisp --entry cgi --output news-bookmarks.cgi
 
 ;;;; ASDF should be loaded by the lisp compiler (via system init, user init or
 ;;;; some other method).
@@ -161,6 +164,7 @@ error."
                                          "-name" "bookmarkbackups" "-prune" "-o"
                                          "-name" "OfflineCache" "-prune" "-o"
                                          "-name" "mozilla-media-cache" "-prune" "-o"
+                                         "-name" "healthreport" "-prune" "-o"
                                          "-name" "places.sqlite" "-print")
                                    :search t :output :stream :error nil)))
     ;;(format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
