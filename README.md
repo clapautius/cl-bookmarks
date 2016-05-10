@@ -9,7 +9,22 @@ Required CLisp packages:
 * [closure-html](http://common-lisp.net/project/closure/closure-html/index.html) for delicious import.
  * closure-html needs [closure-common](http://www.cliki.net/closure-common), flexi-streams and cl-babel.
 
-### Compile
+### Compile / generate binary
+
+#### Export firefox bookmarks to txt
+
+<code>
+# apt-get install cl-sql cl-sql-sqlite3
+# apt-get install buildapp
+$ cd <PRJ-DIR>
+$ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
+* (require 'cl-bookmarks)
+$ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
+ --load firefox.lisp --eval '(defun main (argv) (declare (ignore argv)) (cl-bookmarks:frx-sqlite-to-txt "bookmarks.sqlite" "bookmarks.txt"))' \
+ --entry main --output firefox-bookmarks-to-txt
+</code>
+
+#### Compile in slime
 
 In SLIME / lisp compiler: <code>(asdf:oos 'asdf:load-op 'cl-bookmarks-conv)</code> or
 <code>(require 'cl-bookmarks-conv)</code>.
