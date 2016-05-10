@@ -13,16 +13,14 @@ Required CLisp packages:
 
 #### Export firefox bookmarks to txt
 
-<code>
-# apt-get install cl-sql cl-sql-sqlite3
-# apt-get install buildapp
-$ cd <PRJ-DIR>
-$ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
-* (require 'cl-bookmarks)
-$ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
- --load firefox.lisp --eval '(defun main (argv) (declare (ignore argv)) (cl-bookmarks:frx-sqlite-to-txt "bookmarks.sqlite" "bookmarks.txt"))' \
- --entry main --output firefox-bookmarks-to-txt
-</code>
+    # apt-get install cl-sql cl-sql-sqlite3
+    # apt-get install buildapp
+    $ cd <PRJ-DIR>
+    $ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
+    * (require 'cl-bookmarks)
+    $ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
+     --load firefox.lisp --eval '(defun main (argv) (declare (ignore argv)) (cl-bookmarks:frx-sqlite-to-txt "bookmarks.sqlite" "bookmarks.txt"))' \
+     --entry main --output firefox-bookmarks-to-txt
 
 #### Compile in slime
 
