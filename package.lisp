@@ -8,14 +8,15 @@
            :c-time
            :m-time
            :url
-           :frx-open-file 
+           :frx-open-file
            :frx-close-file
            :frx-sqlite-to-txt
            :frx-add-bookm
            :frx-get-all-bookm
            :frx-get-bookm-by-url
            :frx-get-bookm-by-tags
-           :frx-check-invalid-bookmarks))
+           :frx-check-invalid-bookmarks
+           :main-frx-export-to-txt))
 
 
 ;;; * emacs display settings *

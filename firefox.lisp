@@ -362,7 +362,7 @@ return 0."
              (unwind-protect (setf links (cl-bookmarks:frx-get-all-bookm))
                (cl-bookmarks:frx-close-file))
              (sort links (lambda (a b) (string< (url a) (url b)))))))
-           
+
     (let ((bookm-list (read-bookm-from-sqlite sqlite-fname)))
       (with-open-file (output txt-fname :direction :output :if-exists :supersede)
         (dolist (bookm bookm-list)
@@ -387,6 +387,20 @@ where fk = p.id"))
       (when (not (frx-get-bookm-by-url (second result)))
         (format t "Error for url ~a~%" (second result)))))
   (cl-bookmarks:frx-close-file))
+
+
+(defun main-frx-export-to-txt (argv)
+  "Function used by buildapp to export firefox bookmarks to a txt file.
+ARGV is a list of command line arguments.
+ARGV[1] = sqlite filename
+ARGV[2] = txt filename"
+  (let* ((sqlite-file "bookmarks.sqlite")
+         (txt-file "bookmarks.txt"))
+    (when (> (length argv) 2)
+      (setf sqlite-file (second argv))
+      (setf txt-file (third argv)))
+    ;(format t "sqlite: ~a, txt: ~a~%" sqlite-file txt-file)
+    (frx-sqlite-to-txt sqlite-file txt-file)))
 
 
 ;;; * emacs display settings *

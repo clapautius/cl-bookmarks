@@ -19,7 +19,7 @@ Required CLisp packages:
     $ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
     * (require 'cl-bookmarks)
     $ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
-     --load firefox.lisp --eval '(defun main (argv) (declare (ignore argv)) (cl-bookmarks:frx-sqlite-to-txt "bookmarks.sqlite" "bookmarks.txt"))' \
+     --load firefox.lisp --eval '(defun main (argv) (cl-bookmarks:main-frx-export-to-txt argv))' \
      --entry main --output firefox-bookmarks-to-txt
 
 #### Compile in slime
