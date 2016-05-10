@@ -389,17 +389,14 @@ where fk = p.id"))
   (cl-bookmarks:frx-close-file))
 
 
-(defun main-frx-export-to-txt (argv)
+(defun main-frx-sqlite-to-txt (argv)
   "Function used by buildapp to export firefox bookmarks to a txt file.
-ARGV is a list of command line arguments.
-ARGV[1] = sqlite filename
-ARGV[2] = txt filename"
+ARGV : list of command line arguments (ARGV[1] = sqlite file, ARGV[2] = txt file)"
   (let* ((sqlite-file "bookmarks.sqlite")
          (txt-file "bookmarks.txt"))
     (when (> (length argv) 2)
       (setf sqlite-file (second argv))
       (setf txt-file (third argv)))
-    ;(format t "sqlite: ~a, txt: ~a~%" sqlite-file txt-file)
     (frx-sqlite-to-txt sqlite-file txt-file)))
 
 

@@ -16,7 +16,8 @@
            :frx-get-bookm-by-url
            :frx-get-bookm-by-tags
            :frx-check-invalid-bookmarks
-           :main-frx-export-to-txt))
+           :main-frx-sqlite-to-txt
+           :main-frx-json-to-txt))
 
 
 ;;; * emacs display settings *

@@ -48,7 +48,7 @@
                        (nconc bookm-list (list value)))
                all-bookmarks)
       (cdr bookm-list))))
-      
+
 
 (defun do-json-obj (obj &optional tag)
   "Analyze a json object"
@@ -67,7 +67,7 @@
 
 (defun do-json-container (obj)
   "Analyze a json container"
-  (let* ((title (slot-value obj 'title))
+  (let* ((title (if (slot-exists-p obj 'title) (slot-value obj 'title) ""))
          parent-id tag)
     (when *cl-bookmarks-debug*
       (format t ":debug: found a container with name ~a~%" title))
@@ -89,7 +89,7 @@
   ;;(format t "Found a uri with name ~a~%" (slot-value obj 'title))
   (handler-case
       (let ((uri (slot-value obj 'uri))
-            (title (slot-value obj 'title))
+            (title (if (slot-boundp obj 'title) (slot-value obj 'title) ""))
             (c-time (from-frx-time (if (slot-boundp obj 'date-added)
                                        (slot-value obj 'date-added)
                                        0)))
@@ -132,3 +132,14 @@ bookmarks (sorted by uri)."
                     (m-time bookm)
                     (subseq (multiple-value-list (decode-universal-time (m-time bookm)))
                             0 6)))))))
+
+
+(defun main-frx-json-to-txt (argv)
+  "Function used by buildapp to export firefox bookmarks from json to a txt file.
+ARGV : list of command line arguments (ARGV[1] = json file, ARGV[2] = txt file)"
+  (let* ((json-file "bookmarks.json")
+         (txt-file "bookmarks.txt"))
+    (when (> (length argv) 2)
+      (setf json-file (second argv))
+      (setf txt-file (third argv)))
+    (frx-json-to-txt json-file txt-file)))
