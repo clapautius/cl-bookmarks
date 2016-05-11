@@ -366,14 +366,10 @@ return 0."
     (let ((bookm-list (read-bookm-from-sqlite sqlite-fname)))
       (with-open-file (output txt-fname :direction :output :if-exists :supersede)
         (dolist (bookm bookm-list)
-          (format output "~a~%~a~%~a~%c-time ~a ~a m-time ~a ~a~%"
+          (format output "~a~%~a~%tags: ~{~a~^, ~}~%create-time: ~a (~a)~%modification-time ~a (~a)~%~%"
                   (url bookm) (title bookm) (sort (tags bookm) 'string<)
-                  (c-time bookm)
-                  (subseq (multiple-value-list (decode-universal-time (c-time bookm)))
-                          0 6)
-                  (m-time bookm)
-                  (subseq (multiple-value-list (decode-universal-time (m-time bookm)))
-                          0 6)))))))
+                  (lisp-time-str (c-time bookm)) (c-time bookm)
+                  (lisp-time-str (m-time bookm)) (m-time bookm)))))))
 
 
 (defun frx-check-invalid-bookmarks (sqlite-fname)

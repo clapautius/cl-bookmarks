@@ -8,6 +8,7 @@
            :c-time
            :m-time
            :url
+           :lisp-time-str
            :frx-open-file
            :frx-close-file
            :frx-sqlite-to-txt

@@ -74,6 +74,12 @@
     (format nil "~2,'0d-~2,'0d-~2,'0d" year month day)))
 
 
+(defun lisp-time-str (lisp-time)
+  (multiple-value-bind (sec min hour day month year)
+      (decode-universal-time lisp-time)
+    (format nil "~2,'0d-~2,'0d-~2,'0d,~2,'0d:~2,'0d:~2,'0d" year month day hour min sec)))
+
+
 (defun shorten (str &optional (len 17))
   "Shorten a string to the first len elements"
   (cond

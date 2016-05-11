@@ -1,6 +1,13 @@
 ;;;; QRH
 ;;;; * pretty-print json: python -mjson.tool in.json > out.json
 ;;;; * convert jsonlz4 to json: lz4jsoncat (https://github.com/andikleen/lz4json)
+;;;;
+;;;; Initially, the hierarchy of the bookmarks and tags was based on a tree-like
+;;;; structure. If a bookmark had 2 tags (e.g. 'news' and 'photo'), there were at least 2
+;;;; instances of the bookmark having as parents the tags 'news' and 'photo'.
+;;;; In newer versions of firefox, there is only one instance of the URL that has the tags
+;;;; as a comma-separated string.
+
 
 ;;; functions handling firefox bookmarks from json files
 (in-package :cl-bookmarks)
@@ -11,7 +18,7 @@
   (defun init-bookm-hash-table ()
     (setf all-bookmarks (make-hash-table :test 'equal)))
 
-  (defun add-or-update-bookm (uri title c-time m-time &optional tag)
+  (defun add-or-update-bookm (uri title c-time m-time tag-list &optional tag)
     "Add or update a bookmark in all-bookmarks hash table"
     (let ((existing-bookm (gethash uri all-bookmarks)))
       (if existing-bookm
@@ -19,6 +26,11 @@
             ;; update title if empty
             (when (zerop (length (title existing-bookm)))
               (setf (title existing-bookm) title))
+            ;; add tags from tag-list
+            (when tag-list
+              (dolist (tag-elt tag-list)
+                (when (not (bookm-has-tag-p existing-bookm tag-elt))
+                  (bookm-add-tag existing-bookm tag-elt))))
             ;; add tag
             (when (not (bookm-has-tag-p existing-bookm tag))
               (bookm-add-tag existing-bookm tag))
@@ -34,7 +46,8 @@
                                      :c-time c-time :m-time m-time
                                      :tags (list tag))
                       (make-instance 'bookmark :url uri :title title
-                                     :c-time c-time :m-time m-time)))))))
+                                     :c-time c-time :m-time m-time
+                                     :tags tag-list)))))))
 
   (defun get-bookm-sorted-by-uri ()
     "Return a list of bookmarks sorted alphabetically by uri"
@@ -52,6 +65,22 @@
                        (nconc bookm-list (list value)))
                all-bookmarks)
       (cdr bookm-list))))
+
+
+;; :fixme: optimize or use something else
+(defun tokenize-comma-separated-string (str)
+  "Tokenize a comma separated string. Empty elements are discarded."
+  (let (result cur-elt)
+    (loop for char across str do
+      (if (equal char #\,)
+          (progn
+            (when cur-elt
+              (setf result (append result (list cur-elt))))
+            (setf cur-elt nil))
+          (setf cur-elt (concatenate 'string cur-elt (string char)))))
+    (when cur-elt
+      (setf result (append result (list cur-elt))))
+    result))
 
 
 (defun do-json-obj (obj &optional tag)
@@ -101,8 +130,12 @@
                                        0)))
             (m-time (from-frx-time (if (slot-boundp obj 'last-modified)
                                        (slot-value obj 'last-modified)
-                                       0))))
-        (add-or-update-bookm uri title c-time m-time tag))
+                                       0)))
+            (tag-string (when (slot-boundp obj 'tags) (slot-value obj 'tags)))
+            tag-list)
+        (when tag-string
+          (setf tag-list (tokenize-comma-separated-string tag-string)))
+        (add-or-update-bookm uri title c-time m-time tag-list tag))
     (condition (c)
       (format t "Error parsing bookmark ~a with title ~a (error: ~a)~%"
               obj (slot-value obj 'title) c)
@@ -130,14 +163,10 @@ bookmarks (sorted by uri)."
       (dolist (bookm bookm-list)
         (if print-bookm
             (funcall print-bookm bookm output)
-            (format output "~a~%~a~%~a~%c-time ~a ~a m-time ~a ~a~%"
+            (format output "~a~%~a~%tags: ~{~a~^, ~}~%create-time: ~a (~a)~%modification-time ~a (~a)~%~%"
                     (url bookm) (title bookm) (sort (tags bookm) 'string<)
-                    (c-time bookm)
-                    (subseq (multiple-value-list (decode-universal-time (c-time bookm)))
-                            0 6)
-                    (m-time bookm)
-                    (subseq (multiple-value-list (decode-universal-time (m-time bookm)))
-                            0 6)))))))
+                    (lisp-time-str (c-time bookm)) (c-time bookm)
+                    (lisp-time-str (m-time bookm)) (m-time bookm)))))))
 
 
 (defun main-frx-json-to-txt (argv)
