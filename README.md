@@ -20,7 +20,6 @@ Required CLisp packages:
 
     $ cd <PRJ-DIR>
     $ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
-    * (require 'cl-bookmarks)
     $ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
      --load firefox.lisp --eval '(defun main (argv) (cl-bookmarks:main-frx-sqlite-to-txt argv))' \
      --entry main --output firefoxb-sqlite-to-txt
@@ -31,10 +30,9 @@ Requires cl-json (no .deb package available for debian/ubuntu).
 
     $ cd <PRJ-DIR>
     $ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
-    * (require 'cl-bookmarks)
     $ buildapp --load ~/.sbclrc --eval '(require :cl-bookmarks)' \
      --eval '(require :cl-json)' \
-     --load firefox-json.lisp --eval '(defun main (argv) (cl-bookmarks:main-frx-json-to-txt argv))' \
+     --load firefox-json.lisp --eval '(defun main (argv) (in-package :cl-bookmarks) (cl-bookmarks:main-frx-json-to-txt argv))' \
      --entry main --output firefoxb-json-to-txt
 
 #### Compile in slime

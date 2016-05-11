@@ -397,6 +397,7 @@ ARGV : list of command line arguments (ARGV[1] = sqlite file, ARGV[2] = txt file
     (when (> (length argv) 2)
       (setf sqlite-file (second argv))
       (setf txt-file (third argv)))
+    (format t "Converting bookmarks from ~a to ~a~%" sqlite-file txt-file)
     (frx-sqlite-to-txt sqlite-file txt-file)))
 
 

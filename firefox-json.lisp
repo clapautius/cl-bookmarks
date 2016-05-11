@@ -1,3 +1,7 @@
+;;;; QRH
+;;;; * pretty-print json: python -mjson.tool in.json > out.json
+;;;; * convert jsonlz4 to json: lz4jsoncat (https://github.com/andikleen/lz4json)
+
 ;;; functions handling firefox bookmarks from json files
 (in-package :cl-bookmarks)
 
@@ -54,6 +58,8 @@
   "Analyze a json object"
   (if (slot-exists-p obj 'type)
       (let ((type (slot-value obj 'type)))
+        (when *cl-bookmarks-debug*
+          (format t ":debug: parsing a json obj having type ~a~%" type))
         (cond
           ((equal type  "text/x-moz-place-container")
            (do-json-container obj))
@@ -139,7 +145,11 @@ bookmarks (sorted by uri)."
 ARGV : list of command line arguments (ARGV[1] = json file, ARGV[2] = txt file)"
   (let* ((json-file "bookmarks.json")
          (txt-file "bookmarks.txt"))
+    (when (and (> (length argv) 1) (string= (second argv) "-d"))
+      (setf *cl-bookmarks-debug* t)
+      (setf argv (remove "-d" argv :test #'string=)))
     (when (> (length argv) 2)
       (setf json-file (second argv))
       (setf txt-file (third argv)))
+    (format t "Converting bookmarks from ~a to ~a~%" json-file txt-file)
     (frx-json-to-txt json-file txt-file)))
