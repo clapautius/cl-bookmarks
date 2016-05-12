@@ -165,6 +165,8 @@ error."
                                          "-name" "OfflineCache" "-prune" "-o"
                                          "-name" "mozilla-media-cache" "-prune" "-o"
                                          "-name" "healthreport" "-prune" "-o"
+                                         "-name" "extensions" "-prune" "-o"
+                                         "-name" "indexedDB" "-prune" "-o"
                                          "-name" "places.sqlite" "-print")
                                    :search t :output :stream :error nil)))
     ;;(format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
