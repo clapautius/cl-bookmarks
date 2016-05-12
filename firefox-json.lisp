@@ -102,7 +102,7 @@
 
 (defun do-json-container (obj)
   "Analyze a json container"
-  (let* ((title (if (slot-exists-p obj 'title) (slot-value obj 'title) ""))
+  (let* ((title (if (slot-exists-p obj 'title) (slot-value obj 'title) nil))
          parent-id tag)
     (when *cl-bookmarks-debug*
       (format t ":debug: found a container with name ~a~%" title))
@@ -124,7 +124,7 @@
   ;;(format t "Found a uri with name ~a~%" (slot-value obj 'title))
   (handler-case
       (let ((uri (slot-value obj 'uri))
-            (title (if (slot-boundp obj 'title) (slot-value obj 'title) ""))
+            (title (if (slot-boundp obj 'title) (slot-value obj 'title) nil))
             (c-time (from-frx-time (if (slot-boundp obj 'date-added)
                                        (slot-value obj 'date-added)
                                        0)))
@@ -163,10 +163,7 @@ bookmarks (sorted by uri)."
       (dolist (bookm bookm-list)
         (if print-bookm
             (funcall print-bookm bookm output)
-            (format output "~a~%~a~%tags: ~{~a~^, ~}~%create-time: ~a (~a)~%modification-time ~a (~a)~%~%"
-                    (url bookm) (title bookm) (sort (tags bookm) 'string<)
-                    (lisp-time-str (c-time bookm)) (c-time bookm)
-                    (lisp-time-str (m-time bookm)) (m-time bookm)))))))
+            (bookm-export bookm output))))))
 
 
 (defun main-frx-json-to-txt (argv)

@@ -104,7 +104,11 @@ moz_bookmarks a, moz_bookmarks b where a.fk=~a and b.parent=4 and a.parent=b.id"
           (setf all-bookmarks (cons bookmark all-bookmarks)))
         (when *cl-bookmarks-debug*
           (format t ":debug:frx-get-all-bookm: resulted bookm: ~a~%" bookmark))))
-    all-bookmarks))
+    ;; remove duplicates
+    (delete-duplicates all-bookmarks :test (lambda (a b)
+                                             (and (equal (url a) (url b))
+                                                  (equal (title a) (title b))
+                                                  (equal (tags a) (tags b)))))))
 
 
 (defun frx-get-bookm-by-id (id &optional skip-title)
@@ -366,10 +370,7 @@ return 0."
     (let ((bookm-list (read-bookm-from-sqlite sqlite-fname)))
       (with-open-file (output txt-fname :direction :output :if-exists :supersede)
         (dolist (bookm bookm-list)
-          (format output "~a~%~a~%tags: ~{~a~^, ~}~%create-time: ~a (~a)~%modification-time ~a (~a)~%~%"
-                  (url bookm) (title bookm) (sort (tags bookm) 'string<)
-                  (lisp-time-str (c-time bookm)) (c-time bookm)
-                  (lisp-time-str (m-time bookm)) (m-time bookm)))))))
+          (bookm-export bookm output))))))
 
 
 (defun frx-check-invalid-bookmarks (sqlite-fname)

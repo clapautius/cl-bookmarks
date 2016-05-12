@@ -62,6 +62,14 @@
 (defmethod bookm-has-tag-p ((bookmark bookmark) tag)
   (position tag (tags bookmark) :test #'string-equal))
 
+(defgeneric bookm-export (bookmark output-stream))
+
+(defmethod bookm-export ((bookm bookmark) output-stream)
+  (format output-stream "~a~%~a~%tags: ~{~a~^, ~}~%create-time: ~a (~a)~%modification-time: ~a (~a)~%~%"
+          (url bookm) (or (title bookm) "No title") (sort (tags bookm) 'string<)
+          (lisp-time-str (c-time bookm)) (c-time bookm)
+          (lisp-time-str (m-time bookm)) (m-time bookm)))
+
 
 (defun unix-to-lisp-time (unix-time)
   "Convert an integer value representing a unix time to lisp time"

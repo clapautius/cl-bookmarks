@@ -5,7 +5,8 @@
 The application is written in Common Lisp, so a working common lisp environment is needed.
 
 Required CLisp packages:
-* cl-sql & cl-sqlite3 for editing firefox bookmarks.
+* cl-sql & cl-sqlite3 for editing / exporting firefox bookmarks.
+* [cl-json](https://github.com/hankhero/cl-json) for firefox json export.
 * [closure-html](http://common-lisp.net/project/closure/closure-html/index.html) for delicious import.
  * closure-html needs [closure-common](http://www.cliki.net/closure-common), flexi-streams and cl-babel.
 
@@ -26,7 +27,7 @@ Required CLisp packages:
 
 #### Export firefox bookmarks from json to txt
 
-Requires cl-json (no .deb package available for debian/ubuntu).
+Requires cl-json (https://github.com/hankhero/cl-json, no .deb package available for debian/ubuntu).
 
     $ cd <PRJ-DIR>
     $ ln -s $(pwd)/cl-bookmarks.asd ~/.local/share/common-lisp/source/
