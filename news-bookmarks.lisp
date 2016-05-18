@@ -13,6 +13,13 @@
   (asdf:operate 'asdf:load-op :cl-bookmarks))
 
 
+(let (news-bk-debug)
+  ;; uncomment below for debug messages
+  ;;((news-bk-debug t))
+  (defun news-bk-debug-p ()
+    news-bk-debug))
+
+
 (defun news-load-visited-times (visited-file-path)
   "Load URLs and visited times from VISITED-FILE-PATH. Return these as an alist."
   ;; create file with empty assoc list if file does not exist
@@ -62,7 +69,7 @@
   ((bookm :accessor bookm :initarg :bookm)
    (error-msg :accessor error-msg :initarg :error-msg)))
 
-    
+
 (defun frx-get-news-link (firefox-bookmarks visited-file)
   "Return the bookmark tagged with 'news' having the highest priority.
 Return nil if there are problems with 'news' bookmarks (in this case the second value will
@@ -76,8 +83,8 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
                        links))
            (min-priority (* 24 3600 365))
            (visited (news-load-visited-times visited-file))
-           min-priority-link priority error-msg)
-      (handler-case 
+           min-priority-link priority error-msg links-with-priority)
+      (handler-case
        (dolist (link links-to-visit)
          ;; try last-visit time, then m-time and then c-time
          (let ((last-visit (news-visited-time visited (cl-bookmarks:url link))))
@@ -112,11 +119,15 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
                    ;;(cl-bookmarks:url link) last-visit priority)
            (when (< priority min-priority)
              (setf min-priority priority)
-             (setf min-priority-link link))))
+             (setf min-priority-link link))
+           (setf links-with-priority (append (list (cons link priority)) links-with-priority))))
        (invalid-news-bookmark (e)
                               (setf min-priority-link (bookm e))
                               (setf min-priority nil)
                               (setf error-msg (error-msg e))))
+      (when (news-bk-debug-p)
+        (format t "Sorted list: ~%~{~a~%~}"
+                (sort links-with-priority #'< :key #'cdr)))
       ;; update visited time if everything ok
       (when min-priority
         (news-update-visited-time visited (cl-bookmarks:url min-priority-link))
@@ -158,20 +169,26 @@ bookmark."
 (defun find-frx-places (home)
   "Find 'places.sqlite' in the specified HOME dir. Return its full path or nil on
 error."
-  (let* ((proc (sb-ext:run-program "find"
-                                   (list (concatenate 'string home "/.mozilla/firefox/")
-                                         "-name" "Cache" "-prune" "-o"
-                                         "-name" "bookmarkbackups" "-prune" "-o"
-                                         "-name" "OfflineCache" "-prune" "-o"
-                                         "-name" "mozilla-media-cache" "-prune" "-o"
-                                         "-name" "healthreport" "-prune" "-o"
-                                         "-name" "extensions" "-prune" "-o"
-                                         "-name" "indexedDB" "-prune" "-o"
-                                         "-name" "places.sqlite" "-print")
+  (let* ((find-params (list (concatenate 'string home "/.mozilla/firefox/")
+                            "-name" "Cache" "-prune" "-o"
+                            "-name" "bookmarkbackups" "-prune" "-o"
+                            "-name" "OfflineCache" "-prune" "-o"
+                            "-name" "mozilla-media-cache" "-prune" "-o"
+                            "-name" "healthreport" "-prune" "-o"
+                            "-name" "extensions" "-prune" "-o"
+                            "-name" "indexedDB" "-prune" "-o"
+                            "-name" "places.sqlite" "-print"))
+         (proc (sb-ext:run-program "find"
+                                   find-params
                                    :search t :output :stream :error nil)))
-    ;;(format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
+    (when (news-bk-debug-p)
+      (format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
+      (format t "find cmd: find ~a~%" find-params))
     (when (zerop (process-exit-code proc))
-      (read-line (process-output proc)))))
+      (do ((line (read-line (process-output proc) nil) (read-line (process-output proc) nil)))
+          ((or (not line) (search ".default" line)) line)
+        (when (news-bk-debug-p)
+          (format t "checking if ~a is in a default profile~%" line))))))
 
 
 (defun display-news-link (format &optional home exit)
