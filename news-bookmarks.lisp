@@ -9,15 +9,31 @@
 ;;;; ASDF should be loaded by the lisp compiler (via system init, user init or
 ;;;; some other method).
 
+;;;; If run as a different user (not the owner of places.sqlite), both the sqlite file and
+;;;; its parent directory must be writeable by the other user (or its group).
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (asdf:operate 'asdf:load-op :cl-bookmarks))
 
 
 (let (news-bk-debug)
-  ;; uncomment below for debug messages
-  ;;((news-bk-debug t))
+
   (defun news-bk-debug-p ()
-    news-bk-debug))
+    news-bk-debug)
+
+  (defun news-bk-set-debug-on ()
+    (setf news-bk-debug t)))
+
+
+(let (news-bk-dry-run)
+
+  (defun news-bk-dry-run-p ()
+    news-bk-dry-run)
+
+  (defun news-bk-set-dry-run ()
+    (when (news-bk-debug-p)
+      (format t "Dry run~%"))
+    (setf news-bk-dry-run t)))
 
 
 (defun news-load-visited-times (visited-file-path)
@@ -131,7 +147,8 @@ Return nil if there are problems with 'news' bookmarks (in this case the second 
       ;; update visited time if everything ok
       (when min-priority
         (news-update-visited-time visited (cl-bookmarks:url min-priority-link))
-        (news-save-visited-times visited visited-file))
+        (when (not (news-bk-dry-run-p))
+          (news-save-visited-times visited visited-file)))
       (values min-priority-link error-msg))))
 
 
@@ -184,11 +201,13 @@ error."
     (when (news-bk-debug-p)
       (format t "PLACES: home: ~a, exit-code: ~a~%" home (process-exit-code proc))
       (format t "find cmd: find ~a~%" find-params))
-    (when (zerop (process-exit-code proc))
-      (do ((line (read-line (process-output proc) nil) (read-line (process-output proc) nil)))
-          ((or (not line) (search ".default" line)) line)
-        (when (news-bk-debug-p)
-          (format t "checking if ~a is in a default profile~%" line))))))
+    ;; we don't check the exit code because find might fail because of different reasons
+    ;; (e.g. no permission)
+    ;;(when (zerop (process-exit-code proc))
+    (do ((line (read-line (process-output proc) nil) (read-line (process-output proc) nil)))
+        ((or (not line) (search ".default" line)) line)
+      (when (news-bk-debug-p)
+        (format t "checking if ~a is in a default profile~%" line)))))
 
 
 (defun display-news-link (format &optional home exit)
@@ -219,13 +238,34 @@ If HOME is not specified, it is read from environment."
 
 (export 'cgi)
 
+(defun print-usage ()
+  (format t "Usage: news-bookmarks [ -h ] [ -d ] [ -n ] [ -t ]~%  -d : debug~%  -n : dry run~%  -t : txt output~%"))
+
+
 (defun cgi (&optional args)
   ;; ARGS - needed for buildapp
-  (declare (ignore args))
-  (setq sb-impl::*default-external-format* :utf-8)
-  ;; HTTP headers
-  (format t "Content-Type: text/html~%~%")
-  (display-news-link :html "/home/me" t))
+  (let ((output-format :html))
+    (dolist (arg (cdr args))
+      (when (equal arg "-h")
+        (print-usage)
+        (return-from cgi))
+      (when (equal arg "-n")
+        ;; don't update the visited time
+        (news-bk-set-dry-run))
+      (when (equal arg "-d")
+        (news-bk-set-debug-on))
+      (when (equal arg "-t")
+        ;; txt output
+        (when (news-bk-debug-p)
+          (format t "Output : txt~%"))
+        (setf output-format :txt)))
+
+    (setq sb-impl::*default-external-format* :utf-8)
+    ;; HTTP headers
+    (if (eq output-format :html)
+        (format t "Content-Type: text/html~%~%")
+        (format t "Content-Type: text/plain~%~%"))
+    (display-news-link output-format "/home/me" t)))
 
 ;;; * emacs display settings *
 ;;; Local Variables:
