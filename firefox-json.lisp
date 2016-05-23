@@ -154,7 +154,7 @@ bookmarks (sorted by uri)."
   (get-bookm-sorted-by-uri))
 
 
-(defun frx-json-to-txt (json-fname txt-fname &optional print-bookm)
+(defun frx-json-to-txt (json-fname txt-fname export-format &optional print-bookm)
   "Parse a json file and save all bookmarks to txt-fname (using print-bookm
   function if provided or in standard format: url, title and tags, each one of
   these on a line"
@@ -163,7 +163,7 @@ bookmarks (sorted by uri)."
       (dolist (bookm bookm-list)
         (if print-bookm
             (funcall print-bookm bookm output)
-            (bookm-export bookm output))))))
+            (bookm-export bookm output (if (eq export-format :long) t nil)))))))
 
 
 (defun main-frx-json-to-txt (argv)
@@ -178,4 +178,4 @@ ARGV : list of command line arguments (ARGV[1] = json file, ARGV[2] = txt file)"
       (setf json-file (second argv))
       (setf txt-file (third argv)))
     (format t "Converting bookmarks from ~a to ~a~%" json-file txt-file)
-    (frx-json-to-txt json-file txt-file)))
+    (frx-json-to-txt json-file txt-file :short)))

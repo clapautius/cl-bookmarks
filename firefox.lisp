@@ -358,8 +358,9 @@ return 0."
     (frx-close-file)))
 
 
-(defun frx-sqlite-to-txt (sqlite-fname txt-fname)
-  "Read bookmarks from SQLITE-FILE and print them to TXT-FILE."
+(defun frx-sqlite-to-txt (sqlite-fname txt-fname export-format)
+  "Read bookmarks from SQLITE-FILE and print them to TXT-FILE.
+EXPORT-FORMAT: :long or :short"
   (flet ((read-bookm-from-sqlite (sqlite-fname)
            (let (links)
              (cl-bookmarks:frx-open-file sqlite-fname)
@@ -370,7 +371,7 @@ return 0."
     (let ((bookm-list (read-bookm-from-sqlite sqlite-fname)))
       (with-open-file (output txt-fname :direction :output :if-exists :supersede)
         (dolist (bookm bookm-list)
-          (bookm-export bookm output))))))
+          (bookm-export bookm output (if (eq export-format :long) t nil)))))))
 
 
 (defun frx-check-invalid-bookmarks (sqlite-fname)
@@ -395,7 +396,7 @@ ARGV : list of command line arguments (ARGV[1] = sqlite file, ARGV[2] = txt file
       (setf sqlite-file (second argv))
       (setf txt-file (third argv)))
     (format t "Converting bookmarks from ~a to ~a~%" sqlite-file txt-file)
-    (frx-sqlite-to-txt sqlite-file txt-file)))
+    (frx-sqlite-to-txt sqlite-file txt-file :short)))
 
 
 ;;; * emacs display settings *
